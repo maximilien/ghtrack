@@ -1,0 +1,54 @@
+# Changelog
+
+// Asciidoc template for a single table row. Copy the lines
+// within //// ... //// over into the current, unreleased version
+// table, select the proper icon (see legend at the bottom of this documents)
+// and adapt the link to point to your pull request. Please dont forget
+// the empty line separators.
+
+////
+| 🎁🐛✨🐣🗑️
+|
+| https://github.com/maximilien/ghtrack/pull/[#]
+////
+
+## v0.5.0 (2020-xx-xx)
+
+[cols="1,10,3", options="header", width="100%"]
+|===
+| | Description | PR
+
+|===
+
+
+## v0.4.0 (2020-05-06)
+
+[cols="1,10,3", options="header", width="100%"]
+|===
+| | Description | PR
+
+| ✨
+| First release
+|===
+
+'''
+_Legend_ :  🎁 Feature - 🐛 Fix - ✨ Update - 🐣 Refactoring - 🗑️ Remove
+
+////
+---------------------------------------------
+Ignore PRs:
+---------------------------------------------
+////
+
+// Asciidoc Template for a new release table. Add this after creating a release
+// to collect new changelog entries
+////
+
+## v0.XX.0 (unreleased)
+
+[cols="1,10,3", options="header", width="100%"]
+|===
+| | Description | PR
+
+|===
+////

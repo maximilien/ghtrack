@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+TODO.md
+credentials.yml
+.ghtrack.yml
+vendor
+tmp*
+*.csv
+
 # C extensions
 *.so
 
