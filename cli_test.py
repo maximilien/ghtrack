@@ -24,13 +24,13 @@ class TestCLI(TestCase):
         self.arguments = {'--access-token': '',
                          '--credentials': './.ghtrack.yml',
                          '--users': [],
-                         '--org': '',
                          '--repos': [],
                          '--skip-repos': [],
                          '--help': False,
                          '--verbose': False,
                          '--version': False,
-                         'MONTH': '',
+                         'ORG': 'knative',
+                         'MONTH': 'mar',
                          'commits': False,
                          'reviews': False,
                          'issues': False,
@@ -65,14 +65,14 @@ class CommandTestCase:
         self.arguments = {'--access-token': '',
                          '--credentials': './.ghtrack.yml',
                          '--users': [],
-                         '--org': '',
                          '--all-repos': False,
                          '--repos': [],
                          '--skip-repos': [],
                          '--help': False,
                          '--verbose': False,
                          '--version': False,
-                         'MONTH': '',
+                         'ORG': 'knative',
+                         'MONTH': 'mar',
                          'commits': False,
                          'reviews': False,
                          'issues': False,
@@ -91,16 +91,31 @@ class CommandTestCase:
         else:
             self.assertFalse(command.verbose())
 
+    def test_check_month(self):
+        cli = CLI(self.arguments)
+        for month in ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'September', 'October', 'November', 'December',
+                      'january', 'february', 'march', 'april', 'may', 'june', 'july', 'september', 'october', 'november', 'december',
+                      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+                      'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'sep', 'oct', 'nov', 'dec']:
+            self.assertTrue(cli.command().check_month(month))
+        for fake_month in ['j', 'Jany', 'Mar', 'Decem']:
+            self.assertFalse(cli.command().check_month(fake_month))
+
+    def test_check_org(self):
+        cli = CLI(self.arguments)
+        self.assertFalse(cli.command().check_org(None))
+        self.assertFalse(cli.command().check_org(''))
+
     TEST_ARGS = {'--access-token': 'fake-access-token',
                          '--credentials': './.ghtrack.yml',
                          '--users': ['fake-user1', 'fake-user2'],
-                         '--org': 'fake-org',
                          '--all-repos': False,
                          '--repos': ['fake-repo1', 'fake-repo2'],
                          '--skip-repos': ['fake-repo3'],
                          '--help': False,
                          '--verbose': False,
                          '--version': False,
+                         'ORG': 'fake-org',
                          'MONTH': 'january',
                          'commits': False,
                          'reviews': False,
@@ -129,7 +144,7 @@ class CommandTestCase:
 
     def test_org_empty(self):
         test_args = self.TEST_ARGS.copy()
-        test_args['--org'] = ''
+        test_args['ORG'] = ''
         cli = CLI(test_args)
         self.assertEqual(cli.command().org(), '')
 
@@ -165,7 +180,7 @@ class CommandTestCase:
 
     def test_cmd_line(self):
         for cmd in ["commits", "reviews", "issues"]:
-            expected_cmd_line = "{cmd} january --users=fake-user1,fake-user2 --org=fake-org --repos=fake-repo1,fake-repo2 --skip-repos=fake-repo3".format(cmd=cmd)
+            expected_cmd_line = "{cmd} january fake-org --users=fake-user1,fake-user2 --repos=fake-repo1,fake-repo2 --skip-repos=fake-repo3".format(cmd=cmd)
             test_args = self.TEST_ARGS.copy()
             test_args['stats'] = False
             if cmd == "commits":

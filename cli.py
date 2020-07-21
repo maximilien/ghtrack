@@ -75,6 +75,10 @@ class CLI:
 
 class Command:
     LIST_OPTIONS = ['--users', '--repos', '--skip-repos']
+    MONTHS_CAP = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'September', 'October', 'November', 'December']
+    MONTHS_LOWER = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'september', 'october', 'november', 'december']
+    MONTHS_UPPER = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
+    MONTHS_ABREV = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'sep', 'oct', 'nov', 'dec']
     def __init__(self, args, credentials, client):
         self.__init_empty_options(args)
         self.args = args
@@ -83,10 +87,47 @@ class Command:
 
     def __init_empty_options(self, args):
         for option in self.LIST_OPTIONS:
-            if args[option] == None:
+            if args[option] == None or args[option] == '':
                 args[option] = []
             elif isinstance(args[option], str):
-                args[option] = [args[option]]
+                if ',' in args[option]:
+                    args[option] = args[option].split(',')
+                else:
+                    args[option] = [args[option]]
+
+    def _init_users_stats(self, users_stats):
+        for user in self.users():
+            users_stats[user] = {}
+            for repo in self.repos():
+                if repo not in self.skip_repos():
+                    users_stats[user][repo] = 0
+
+    def check_month(self, month):
+        if month in self.MONTHS_LOWER:
+            return True
+        elif month in self.MONTHS_UPPER:
+            return True
+        elif month in self.MONTHS_CAP:
+            return True
+        elif month in self.MONTHS_ABREV:
+            return True
+        return False
+
+    def check_org(self, org):
+        if org == None:
+            return False
+        elif org == '':
+            return False
+        return True
+
+    def check_required_options(self):
+        if not self.check_month(self.month()):
+            self.print("Invalid month '{month}'".format(month=self.month()))
+            return False
+        elif not self.check_org(self.org()):
+            self.print("Invalid org value '{org}'".format(org=self.org()))
+            return False
+        return True
 
     def println(self, msg):
         self.print(msg + "\n")
@@ -105,7 +146,7 @@ class Command:
         return self.args['--users']
 
     def org(self):
-        return self.args['--org']
+        return self.args['ORG']
 
     def repos(self):
         return self.args['--repos']
@@ -121,7 +162,7 @@ class Command:
         repos_line = "--all-repos"
         if self.args['--all-repos'] == False:
             repos_line = "--repos={repos} --skip-repos={skip_repos}".format(repos=','.join(self.repos()), skip_repos=','.join(self.skip_repos()))
-        cmd_line = "{name} {month} --users={users} --org={org}".format(name=self.name(), month=self.month(), users=','.join(self.users()), org=self.org())
+        cmd_line = "{name} {month} {org} --users={users}".format(name=self.name(), month=self.month(), users=','.join(self.users()), org=self.org())
         cmd_line += " " + repos_line
         return cmd_line
 
@@ -129,6 +170,8 @@ class Command:
         print("# GH Track output for cmd line: {cmd_line}".format(cmd_line=self.cmd_line()))
 
     def execute(self):
+        if not self.check_required_options():
+            return -1
         func = self.dispatch()
         rc = func()
         if rc == None:
@@ -155,7 +198,9 @@ class Command:
 class Commits(Command):
     def __init__(self, args, credentials, client):
         self.args = args
+        self.users_commits = {} # {user: {repo_name: commit_count},...}
         super().__init__(self.args, credentials, client)
+        self._init_users_stats(self.users_commits)
 
     def __print(self, commit):
         print("Commits: {args}".format(args=self.args))
@@ -165,13 +210,16 @@ class Commits(Command):
 
     def commits(self):
         self.start_comment()
+        print(self.users_commits) #DEBUG
         return 0
 
 # reviews command group
 class Reviews(Command):
     def __init__(self, args, credentials, client):
         self.args = args
+        self.users_reviews = {} # {user: {repo_name: review_count},...}
         super().__init__(self.args, credentials, client)
+        self._init_users_stats(self.users_reviews)
 
     def __print(self, commit):
         print("Reviews: {args}".format(args=self.args))
@@ -181,13 +229,16 @@ class Reviews(Command):
 
     def reviews(self): 
         self.start_comment()
+        print(self.users_reviews) #DEBUG
         return 0
 
 # issues command group
 class Issues(Command):
     def __init__(self, args, credentials, client):
         self.args = args
+        self.users_issues = {} # {user: {repo_name: issue_count},...}
         super().__init__(self.args, credentials, client)
+        self._init_users_stats(self.users_issues)
 
     def __print(self, commit):
         print("Issues: {args}".format(args=self.args))
@@ -197,6 +248,7 @@ class Issues(Command):
 
     def issues(self):
         self.start_comment()
+        print(self.users_issues) #DEBUG
         return 0
 
 # stats command group

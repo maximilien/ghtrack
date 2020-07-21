@@ -17,10 +17,10 @@
 """GitHub track
 
 Usage:
-  ght commits MONTH [options]
-  ght reviews MONTH [options]
-  ght issues MONTH [options]
-  ght stats MONTH [options]
+  ght commits MONTH ORG [options]
+  ght reviews MONTH ORG [options]
+  ght issues MONTH ORG [options]
+  ght stats MONTH ORG [options]
 
   ght (-h | --help)
   ght (-v | --version)
@@ -33,7 +33,6 @@ Options:
   --issues                       Collect issues stats.
 
   --users=user1,user2,...        List of GitHub user IDs to track.
-  --org=organization             The GitHub organization.
 
   --all-repos                    Track all repositories in GitHub organization.
   --repos=repo1,repo2,...        List of repositories in GitHub organization to track.

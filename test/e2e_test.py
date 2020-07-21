@@ -17,10 +17,10 @@ import os, sys, subprocess, unittest
 HELP_STRING = """GitHub track
 
 Usage:
-  ght commits MONTH [options]
-  ght reviews MONTH [options]
-  ght issues MONTH [options]
-  ght stats MONTH [options]
+  ght commits MONTH ORG [options]
+  ght reviews MONTH ORG [options]
+  ght issues MONTH ORG [options]
+  ght stats MONTH ORG [options]
 
   ght (-h | --help)
   ght (-v | --version)
@@ -33,7 +33,6 @@ Options:
   --issues                       Collect issues stats.
 
   --users=user1,user2,...        List of GitHub user IDs to track.
-  --org=organization             The GitHub organization.
 
   --all-repos                    Track all repositories in GitHub organization.
   --repos=repo1,repo2,...        List of repositories in GitHub organization to track.
@@ -73,7 +72,7 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("GH Track v" in ght.out)
 
     def test_commits(self):
-        cmd_line = "commits january --users=maximilien --org=knative --repos=client"
+        cmd_line = "commits january knative --users=maximilien --repos=client"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
@@ -81,7 +80,7 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
 
     def _test_reviews(self):
-        cmd_line = "reviews january --users=maximilien --org=knative --repos=client"
+        cmd_line = "reviews january knative --users=maximilien --repos=client"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
@@ -89,7 +88,7 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
 
     def _test_issues(self):
-        cmd_line = "issues january --users=maximilien --org=knative --repos=client"
+        cmd_line = "issues january knative --users=maximilien --repos=client"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
@@ -97,7 +96,7 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
 
     def _test_stats(self):
-        cmd_line = "stats january --commits --reviews --issues --users=maximilien --org=knative --repos=client"
+        cmd_line = "stats january knative --commits --reviews --issues --users=maximilien --repos=client"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
