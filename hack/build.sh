@@ -49,7 +49,7 @@ run() {
     exit 0
   fi
 
-  # Run only tests
+  # Run only UT tests
   if $(has_flag --test -t); then
     py_test
     exit 0
@@ -57,6 +57,13 @@ run() {
 
   # Run only e2e tests
   if $(has_flag --e2e -e); then
+    py_e2e
+    exit 0
+  fi
+
+  # Run only all tests
+  if $(has_flag --tests -T); then
+    py_test
     py_e2e
     exit 0
   fi
@@ -178,7 +185,7 @@ py_e2e() {
 
 check_credentials() {
   if [ ! -f ./.ghtrack.yml ]; then
-    echo "🔥 Could not find credentials.yml file"
+    echo "🔥 Could not find .ghtrack.yml.yml file"
     exit -1
   fi
 }
@@ -285,8 +292,9 @@ with the following options:
 
 -a  --all                     Run all build, unit and e2e tests
 -f  --fast                    Only compile (without dep update, formatting, testing, doc gen)
--t  --test                    Run tests when used with --fast or --watch
+-t  --test                    Run the UT tests when used with --fast or --watch
 -e  --e2e                     Run the e2e tests when used with --fast or --watch
+-T  --tests                   Run the UT and e2e tests
 -d  --docker                  Generates Docker image and push using DOCKER_USERNAME
     --docker-image            Generates Docker image only
     --docker-push             Pushes Docker image using DOCKER_USERNAME
@@ -302,8 +310,9 @@ ln -s $(basedir)/hack/build.sh /usr/local/bin/ghtrack.sh
 Examples:
 
 * Run build and test: ................ build.sh
-* Run only tests: .................... build.sh --test
+* Run only UT tests:.................. build.sh --test
 * Run only e2e tests: ................ build.sh --e2e
+* Run all tests: ..................... build.sh --tests
 * Compile with tests: ................ build.sh -f -t
 * Generate and push docker image: .... build.sh --docker
 * Build and all and tests: ........... build.sh --all

@@ -21,7 +21,7 @@ RUN pip install PyYAML==5.3.1
 RUN pip install docopt==0.6.2
 
 # Build and run UTs
-RUN /ghtrack/hack/build.sh --tests
+RUN /ghtrack/hack/build.sh --test
 
 # Run sanity check.
 CMD /ghtrack/ght --version

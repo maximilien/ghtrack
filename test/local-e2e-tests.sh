@@ -18,7 +18,7 @@ dir=$(dirname "${BASH_SOURCE[0]}")
 
 # Start testing
 echo "🧪  e2e Testing"
-python3 -m unittest *_e2e_test.py
+python3 -m unittest *e2e_test.py
 err=$?
 
 # Output

@@ -33,14 +33,14 @@ Options:
   --issues                       Collect issues stats.
 
   --users=user1,user2,...        List of GitHub user IDs to track.
-  --org=organization.            The GitHub organization.
+  --org=organization             The GitHub organization.
 
   --all-repos                    Track all repositories in GitHub organization.
   --repos=repo1,repo2,...        List of repositories in GitHub organization to track.
   --skip-repos=repo1,repo2,...   List of repositories in GitHub organization to skip.
 
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
-  -o --output-file=FILE          The file path to save results CSV file.
+  -o --output=FILE               The file path to save results CSV file.
 
   -h --help                      Show this screen.
   -v --version                   Show version."""
@@ -59,15 +59,53 @@ class GHT:
             return cpe.returncode
         return 0
 
-class TestBasicWorkflow(unittest.TestCase):
+class TestBasicWorkflow_stdout(unittest.TestCase):
     def test_help(self):
-        st = GHT(["--help"])
-        rc = st.execute()
+        ght = GHT(["--help"])
+        rc = ght.execute()
         self.assertEqual(rc, 0)
-        self.assertEqual(HELP_STRING, st.out)
+        self.assertEqual(HELP_STRING, ght.out)
 
     def test_version(self):
-        st = GHT(["--version"])
-        rc = st.execute()
+        ght = GHT(["--version"])
+        rc = ght.execute()
         self.assertEqual(rc, 0)
-        self.assertTrue("GH Track v" in st.out)
+        self.assertTrue("GH Track v" in ght.out)
+
+    def test_commits(self):
+        cmd_line = "commits january --users=maximilien --org=knative --repos=client"
+        cmd_line_args = cmd_line.split(" ")
+        ght = GHT(cmd_line_args)
+        rc = ght.execute()
+        self.assertEqual(rc, 0)
+        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+
+    def _test_reviews(self):
+        cmd_line = "reviews january --users=maximilien --org=knative --repos=client"
+        cmd_line_args = cmd_line.split(" ")
+        ght = GHT(cmd_line_args)
+        rc = ght.execute()
+        self.assertEqual(rc, 0)
+        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+
+    def _test_issues(self):
+        cmd_line = "issues january --users=maximilien --org=knative --repos=client"
+        cmd_line_args = cmd_line.split(" ")
+        ght = GHT(cmd_line_args)
+        rc = ght.execute()
+        self.assertEqual(rc, 0)
+        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+
+    def _test_stats(self):
+        cmd_line = "stats january --commits --reviews --issues --users=maximilien --org=knative --repos=client"
+        cmd_line_args = cmd_line.split(" ")
+        ght = GHT(cmd_line_args)
+        rc = ght.execute()
+        self.assertEqual(rc, 0)
+        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+
+class TestBasicWorkflow_csv(unittest.TestCase):
+    pass
+
+class TestAdvancedWorkflow_csv(unittest.TestCase):
+    pass

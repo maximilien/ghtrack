@@ -66,6 +66,7 @@ class CommandTestCase:
                          '--credentials': './.ghtrack.yml',
                          '--users': [],
                          '--org': '',
+                         '--all-repos': False,
                          '--repos': [],
                          '--skip-repos': [],
                          '--help': False,
@@ -89,6 +90,94 @@ class CommandTestCase:
             self.assertTrue(command.verbose())
         else:
             self.assertFalse(command.verbose())
+
+    TEST_ARGS = {'--access-token': 'fake-access-token',
+                         '--credentials': './.ghtrack.yml',
+                         '--users': ['fake-user1', 'fake-user2'],
+                         '--org': 'fake-org',
+                         '--all-repos': False,
+                         '--repos': ['fake-repo1', 'fake-repo2'],
+                         '--skip-repos': ['fake-repo3'],
+                         '--help': False,
+                         '--verbose': False,
+                         '--version': False,
+                         'MONTH': 'january',
+                         'commits': False,
+                         'reviews': False,
+                         'issues': False,
+                         'stats': True}
+
+    def test_month(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['MONTH'] = 'march'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().month(), "march")
+
+    def test_users(self):
+        cli = CLI(self.TEST_ARGS.copy())
+        self.assertEqual(cli.command().users(), ['fake-user1', 'fake-user2'])
+
+    def test_users_empty(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--users'] = []
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().users(), [])
+
+    def test_org(self):
+        cli = CLI(self.TEST_ARGS.copy())
+        self.assertEqual(cli.command().org(), 'fake-org')
+
+    def test_org_empty(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--org'] = ''
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().org(), '')
+
+    def test_repos(self):
+        cli = CLI(self.TEST_ARGS.copy())
+        self.assertEqual(cli.command().repos(), ['fake-repo1', 'fake-repo2'])
+
+    def test_repos_empty(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--repos'] = []
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().repos(), [])
+
+    def test_skip_repos(self):
+        cli = CLI(self.TEST_ARGS.copy())
+        self.assertEqual(cli.command().skip_repos(), ['fake-repo3'])
+
+    def test_skip_repos_empty(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--skip-repos'] = []
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().skip_repos(), [])
+
+    def test_all_repos_False(self):
+        cli = CLI(self.TEST_ARGS.copy())
+        self.assertEqual(cli.command().all_repos(), False)
+
+    def test_all_repos_True(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--all-repos'] = True
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().all_repos(), True)
+
+    def test_cmd_line(self):
+        for cmd in ["commits", "reviews", "issues"]:
+            expected_cmd_line = "{cmd} january --users=fake-user1,fake-user2 --org=fake-org --repos=fake-repo1,fake-repo2 --skip-repos=fake-repo3".format(cmd=cmd)
+            test_args = self.TEST_ARGS.copy()
+            test_args['stats'] = False
+            if cmd == "commits":
+                test_args['commits'] = True
+            elif cmd == "reviews":
+                test_args['reviews'] = True
+            elif cmd == 'issues':
+                test_args['issues'] = True
+            else:
+                test_args['stats'] = True
+            cli = CLI(test_args)
+            self.assertEqual(cli.command().cmd_line(), expected_cmd_line)
 
     def test_name(self):
         cli = CLI(self.arguments)

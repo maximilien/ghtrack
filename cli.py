@@ -40,12 +40,11 @@ class CLI:
     def __parse_credentials(self):
         credentials_hash = {'access_token': ''}
         file_name = '.ghtrack.yml'
-        if self.args['--credentials']: file_name = self.args['--credentials'] 
+        if '--credentials' in self.args: file_name = self.args['--credentials']
         try:
             with open(file_name) as file:
                 loaded_credentials = yaml.load(file, Loader=yaml.FullLoader)
                 credentials_hash.update(loaded_credentials)
-
         except:
             Console.print("Error opening credentials file: {file_name}".format(file_name=file_name))
         return credentials_hash
@@ -75,13 +74,59 @@ class CLI:
             raise Exception("Invalid command")
 
 class Command:
+    LIST_OPTIONS = ['--users', '--repos', '--skip-repos']
     def __init__(self, args, credentials, client):
+        self.__init_empty_options(args)
         self.args = args
         self.credentials = credentials
         self.client = client
 
+    def __init_empty_options(self, args):
+        for option in self.LIST_OPTIONS:
+            if args[option] == None:
+                args[option] = []
+            elif isinstance(args[option], str):
+                args[option] = [args[option]]
+
+    def println(self, msg):
+        self.print(msg + "\n")
+
+    def print(self, msg):
+        #TODO: check for file output
+        print(msg)
+
     def verbose(self):
         return self.args['--verbose']
+
+    def month(self):
+        return self.args['MONTH']
+
+    def users(self):
+        return self.args['--users']
+
+    def org(self):
+        return self.args['--org']
+
+    def repos(self):
+        return self.args['--repos']
+
+    def skip_repos(self):
+        return self.args['--skip-repos']
+
+    def all_repos(self):
+
+        return self.args['--all-repos']
+
+    def cmd_line(self):
+        repos_line = "--all-repos"
+        if self.args['--all-repos'] == False:
+            repos_line = "--repos={repos} --skip-repos={skip_repos}".format(repos=','.join(self.repos()), skip_repos=','.join(self.skip_repos()))
+        cmd_line = "{name} {month} --users={users} --org={org}".format(name=self.name(), month=self.month(), users=','.join(self.users()), org=self.org())
+        cmd_line += " " + repos_line
+        return cmd_line
+
+    def start_comment(self):
+        print("# GH Track output for cmd line: {cmd_line}".format(cmd_line=self.cmd_line()))
 
     def execute(self):
         func = self.dispatch()
@@ -119,6 +164,7 @@ class Commits(Command):
       return "commits"
 
     def commits(self):
+        self.start_comment()
         return 0
 
 # reviews command group
@@ -133,7 +179,8 @@ class Reviews(Command):
     def name(self):
       return "reviews"
 
-    def reviews(self):
+    def reviews(self): 
+        self.start_comment()
         return 0
 
 # issues command group
@@ -149,6 +196,7 @@ class Issues(Command):
       return "issues"
 
     def issues(self):
+        self.start_comment()
         return 0
 
 # stats command group
@@ -164,4 +212,5 @@ class Stats(Command):
       return "stats"
 
     def stats(self):
+        self.start_comment()
         return 0

@@ -33,14 +33,14 @@ Options:
   --issues                       Collect issues stats.
 
   --users=user1,user2,...        List of GitHub user IDs to track.
-  --org=organization.            The GitHub organization.
+  --org=organization             The GitHub organization.
 
   --all-repos                    Track all repositories in GitHub organization.
   --repos=repo1,repo2,...        List of repositories in GitHub organization to track.
   --skip-repos=repo1,repo2,...   List of repositories in GitHub organization to skip.
 
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
-  -o --output-file=FILE          The file path to save results CSV file.
+  -o --output=FILE               The file path to save results CSV file.
 
   -h --help                      Show this screen.
   -v --version                   Show version.
