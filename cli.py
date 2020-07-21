@@ -14,6 +14,8 @@
 
 import yaml, csv, os.path
 
+from datetime import datetime
+from calendar import monthrange
 from client import GHClient
 
 VERBOSE=False
@@ -76,15 +78,16 @@ class CLI:
 
 class Command:
     LIST_OPTIONS = ['--users', '--repos', '--skip-repos']
-    MONTHS_CAP = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'September', 'October', 'November', 'December']
-    MONTHS_LOWER = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'september', 'october', 'november', 'december']
-    MONTHS_UPPER = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
-    MONTHS_ABREV = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'sep', 'oct', 'nov', 'dec']
+    MONTHS_CAP = {'January':1, 'February':2, 'March':3, 'April':4, 'May':5, 'June':6, 'July':7, 'August':8, 'September':9, 'October':10, 'November':11, 'December':12}
+    MONTHS_LOWER = {'january':1, 'february':2, 'march':3, 'april':4, 'may':5, 'june':6, 'july':7, 'august':8, 'september':9, 'october':10, 'november':11, 'december':12}
+    MONTHS_UPPER = {'JANUARY':1, 'FEBRUARY':2, 'MARCH':3, 'APRIL':4, 'MAY':5, 'JUNE':6, 'JULY':7, 'AUGUST':7, 'SEPTEMBER':9, 'OCTOBER':10, 'NOVEMBER':11, 'DECEMBER':12}
+    MONTHS_ABREV = {'jan':1, 'feb':2, 'mar':3, 'apr':4, 'may':5, 'jun':6, 'jul':7, 'aug':8, 'sep':9, 'oct':10, 'nov':11, 'dec':12}
     def __init__(self, args, credentials, client):
         self.__init_empty_options(args)
         self.args = args
         self.credentials = credentials
         self.client = client
+        self.__month_number = 0
 
     def __init_empty_options(self, args):
         for option in self.LIST_OPTIONS:
@@ -104,13 +107,17 @@ class Command:
                     users_stats[user][repo] = 0
 
     def check_month(self, month):
-        if month in self.MONTHS_LOWER:
+        if month in self.MONTHS_LOWER.keys():
+            self.__month_number = self.MONTHS_LOWER[month]
             return True
-        elif month in self.MONTHS_UPPER:
+        elif month in self.MONTHS_UPPER.keys():
+            self.__month_number = self.MONTHS_UPPER[month]
             return True
-        elif month in self.MONTHS_CAP:
+        elif month in self.MONTHS_CAP.keys():
+            self.__month_number = self.MONTHS_CAP[month]
             return True
-        elif month in self.MONTHS_ABREV:
+        elif month in self.MONTHS_ABREV.keys():
+            self.__month_number = self.MONTHS_ABREV[month]
             return True
         return False
 
@@ -139,6 +146,22 @@ class Command:
 
     def verbose(self):
         return self.args['--verbose']
+
+    def year(self):
+        return datetime.now().year
+
+    def start_date(self):
+        return datetime(month=self.month_number(), day=1, year=self.year())
+
+    def end_date(self):
+        return datetime(month=self.month_number(), day=self.month_last_day(), year=self.year())
+
+    def month_last_day(self):
+        range = monthrange(self.year(), self.month_number())
+        return range[1]
+
+    def month_number(self):
+        return self.__month_number
 
     def month(self):
         return self.args['MONTH']
@@ -258,6 +281,12 @@ class Issues(Command):
 
     def issues(self):
         self.start_comment()
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            for repo in repos:
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    issue_count = self.client.issue_count(repo, user, self.start_date(), self.end_date(), 'open')
+                    self.users_issues[user][repo.name] = issue_count
         print(self.users_issues) #DEBUG
         return 0
 

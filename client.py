@@ -28,11 +28,16 @@ class GHClient:
         ghorg = self.get_client().get_organization(org)
         return ghorg.get_repos()
 
+    def issue_count(self, repo, author_login, start_date, end_date, state='open'):
+        issues = repo.get_issues(state=state)
+        issue_count = 0
+        for i in issues:
+            if i.user.login == author_login and (i.created_at >= start_date and i.created_at <= end_date):
+                issue_count += 1
+        return issue_count
+
     def commits(self):
         return None
 
     def reviews(self):
-        return None
-
-    def issues(self):
         return None
