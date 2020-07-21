@@ -23,6 +23,16 @@ class Console:
         if VERBOSE:
             print(msg)
 
+def parse_credentials_map(file_name):
+    credentials_map = {'access_token': ''}
+    try:
+        with open(file_name) as file:
+            loaded_credentials = yaml.load(file, Loader=yaml.FullLoader)
+            credentials_map.update(loaded_credentials)
+    except:
+        Console.print("Error opening credentials file: {file_name}".format(file_name=file_name))
+    return credentials_map
+
 class Credentials:
     def __init__(self, hash):
         self.hash = hash
@@ -38,21 +48,13 @@ class CLI:
             VERBOSE = True
 
     def __parse_credentials(self):
-        credentials_hash = {'access_token': ''}
         file_name = '.ghtrack.yml'
         if '--credentials' in self.args: file_name = self.args['--credentials']
-        try:
-            with open(file_name) as file:
-                loaded_credentials = yaml.load(file, Loader=yaml.FullLoader)
-                credentials_hash.update(loaded_credentials)
-        except:
-            Console.print("Error opening credentials file: {file_name}".format(file_name=file_name))
-        return credentials_hash
+        return parse_credentials_map(file_name)
 
     def __setup_credentials(self):
         credentials_hash = self.__parse_credentials()
-        if self.args['--access-token'] and self.args['--credentials']:
-            Console.print("WARNING: using --access-token value in credentials")
+        if self.args['--access-token']:
             credentials_hash['access_token'] = self.args['--access-token']
         else:
             self.args['--access-token'] = credentials_hash['access_token']
@@ -60,8 +62,7 @@ class CLI:
 
     def command(self, client=None):
         if client == None:
-            client = GHClient(self.credentials)
-
+            client = GHClient(self.credentials.access_token())
         if self.args.get('commits') and self.args['commits']:
             return Commits(self.args, self.credentials, client)
         elif self.args.get('reviews') and self.args['reviews']:
@@ -155,7 +156,6 @@ class Command:
         return self.args['--skip-repos']
 
     def all_repos(self):
-
         return self.args['--all-repos']
 
     def cmd_line(self):
@@ -169,7 +169,17 @@ class Command:
     def start_comment(self):
         print("# GH Track output for cmd line: {cmd_line}".format(cmd_line=self.cmd_line()))
 
+    def fetch_repos(self):
+        if not self.all_repos(): return
+        if self.all_repos() and len(self.repos()) > 0:
+            self.warn("Warning: ignoring --repos since --all-repos is set")
+        repo_names = []
+        repos = self.client.repos(self.org())
+        for repo in repos: repo_names.append(repo.name)
+        self.args['--repos'] = repo_names
+
     def execute(self):
+        self.fetch_repos()
         if not self.check_required_options():
             return -1
         func = self.dispatch()

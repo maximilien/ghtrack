@@ -83,6 +83,15 @@ class CommandTestCase:
     def __create_mock_client(self, MockGHClient):
         return MockGHClient()
 
+    @patch('client.GHClient')
+    def __create_mock_client_get_repos(self, MockGHClient):
+        client = MockGHClient()
+        class Repo:
+            def __init__(self, name):
+                self.name = name
+        client.repos.return_value = [Repo('fake-repo1'), Repo('fake-repo2'), Repo('fake-repo3')]
+        return client
+
     def test_verbose(self):
         self.arguments[self.command_name()] = True
         command = CLI(self.arguments).command(self.__create_mock_client())
@@ -105,6 +114,19 @@ class CommandTestCase:
         cli = CLI(self.arguments)
         self.assertFalse(cli.command().check_org(None))
         self.assertFalse(cli.command().check_org(''))
+
+    def test_fetch_repos(self):
+        self.arguments['--repos'] = []
+        self.arguments['--skip-repos'] = []
+        self.arguments['--all-repos'] = True
+        self.org = 'knative'
+        client = self.__create_mock_client_get_repos()
+        cli = CLI(self.arguments)
+        cli.command(client).fetch_repos()
+        self.assertTrue(len(self.arguments['--repos']) == 3)
+        self.assertTrue(len(self.arguments['--skip-repos']) == 0)
+        for repo_name in ['fake-repo1', 'fake-repo2', 'fake-repo3']:
+            self.assertTrue(repo_name in self.arguments['--repos'])
 
     TEST_ARGS = {'--access-token': 'fake-access-token',
                          '--credentials': './.ghtrack.yml',

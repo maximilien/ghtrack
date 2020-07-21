@@ -13,6 +13,9 @@
 # limitations under the License.
 
 import os, sys, subprocess, unittest
+sys.path.insert(0, "{current_dir}/..".format(current_dir=os. getcwd()))
+
+from cli import parse_credentials_map
 
 HELP_STRING = """GitHub track
 
@@ -51,7 +54,8 @@ class GHT:
 
     def execute(self):
         try:
-            output = subprocess.check_output(["python3", "../ghtrack.py"] + self.cmds)
+            access_token = parse_credentials_map('../.ghtrack.yml')['access_token']
+            output = subprocess.check_output(["python3", "../ghtrack.py", "--access-token={access_token}".format(access_token=access_token)] + self.cmds)
             self.out = output.decode("utf-8").rstrip()
         except CalledProcessError as cpe:
             self.out = cpe.output

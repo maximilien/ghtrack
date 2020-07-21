@@ -20,7 +20,13 @@ class GHClient:
         self.access_token = access_token
 
     def get_client(self):
-        return None
+        if self.client == None:
+            self.client = Github(self.access_token)
+        return self.client
+
+    def repos(self, org):
+        ghorg = self.get_client().get_organization(org)
+        return ghorg.get_repos()
 
     def commits(self):
         return None
