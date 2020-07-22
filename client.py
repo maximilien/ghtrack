@@ -19,6 +19,14 @@ class GHClient:
         self.client = None
         self.access_token = access_token
 
+    def __week_in(self, week_date, start_date, end_date):
+        week_number = week_date.date().isocalendar()[1]
+        start_week = start_date.date().isocalendar()[1]
+        end_week = end_date.date().isocalendar()[1]
+        if week_number >= start_week and week_number <= end_week:
+            return True
+        return False
+
     def get_client(self):
         if self.client == None:
             self.client = Github(self.access_token)
@@ -28,16 +36,29 @@ class GHClient:
         ghorg = self.get_client().get_organization(org)
         return ghorg.get_repos()
 
-    def issue_count(self, repo, author_login, start_date, end_date, state='open'):
+    def issues_count(self, repo, author_login, start_date, end_date, state='open'):
         issues = repo.get_issues(state=state)
-        issue_count = 0
+        issues_count = 0
         for i in issues:
             if i.user.login == author_login and (i.created_at >= start_date and i.created_at <= end_date):
-                issue_count += 1
-        return issue_count
+                issues_count += 1
+        return issues_count
 
-    def commits(self):
-        return None
+    def reviews_count(self, repo, author_login, start_date, end_date):
+        prs = repo.get_pulls()
+        reviews_count = 0
+        for pr in prs:
+            reviews = pr.get_reviews()
+            for r in reviews:
+                if r.user.login == author_login and (r.submitted_at >= start_date and r.submitted_at <= end_date):
+                    reviews_count += 1
+        return reviews_count
 
-    def reviews(self):
-        return None
+    def commits_count(self, repo, author_login, start_date, end_date):
+        commits_count = 0
+        for sc in repo.get_stats_contributors():
+            if sc.author.login == author_login:
+                for w in sc.weeks:
+                    if self.__week_in(w.w, start_date, end_date): 
+                        commits_count += 1
+        return commits_count

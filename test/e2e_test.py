@@ -76,36 +76,36 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("GH Track v" in ght.out)
 
     def test_commits(self):
-        cmd_line = "commits january knative --users=maximilien --repos=client"
+        cmd_line = "commits january knative --users=maximilien --repos=client --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
         self.assertEqual(rc, 0)
-        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+        self.assertTrue("OK" in ght.out)
 
-    def _test_reviews(self):
-        cmd_line = "reviews january knative --users=maximilien --repos=client"
+    def test_reviews(self):
+        cmd_line = "reviews january knative --users=maximilien --repos=client --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
         self.assertEqual(rc, 0)
-        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+        self.assertTrue("OK" in ght.out)
 
-    def _test_issues(self):
-        cmd_line = "issues january knative --users=maximilien --repos=client"
+    def test_issues(self):
+        cmd_line = "issues january knative --users=maximilien --repos=client --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
         self.assertEqual(rc, 0)
-        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+        self.assertTrue("OK" in ght.out)
 
     def _test_stats(self):
-        cmd_line = "stats january knative --commits --reviews --issues --users=maximilien --repos=client"
+        cmd_line = "stats january knative --commits --reviews --issues --users=maximilien --repos=client --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
         self.assertEqual(rc, 0)
-        self.assertTrue("# GH Track output for cmd line: {cmd_line}".format(cmd_line=cmd_line) in ght.out)
+        self.assertTrue("OK" in ght.out)
 
 class TestBasicWorkflow_csv(unittest.TestCase):
     pass

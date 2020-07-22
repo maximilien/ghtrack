@@ -12,18 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml, csv, os.path
+import sys, yaml, json, csv, os.path
 
 from datetime import datetime
 from calendar import monthrange
+
 from client import GHClient
 
 VERBOSE=False
 
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 class Console:
-    def print(msg):
+    def verbose(msg):
         if VERBOSE:
-            print(msg)
+            print(f"{Colors.OKBLUE}{msg}{Colors.ENDC}".format(msg=str(msg)))
+
+    def print(msg=''):
+        print(msg)
+
+    def ok(msg):
+        print(f"{Colors.OKGREEN}{msg}{Colors.ENDC}".format(msg=str(msg)))
+
+    def fail(msg):
+        print(f"{Colors.FAIL}Error: {msg}{Colors.ENDC}".format(msg=str(msg)))
+
+    def warn(msg):
+        print(f"{Colors.WARNING}Warning: {msg}{Colors.ENDC}".format(msg=str(msg)))
+
+    def progress(count, total, status=''):
+        bar_len = 60
+        filled_len = int(round(bar_len * count / float(total)))
+
+        percents = round(100.0 * count / float(total), 1)
+        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+        sys.stdout.flush()
 
 def parse_credentials_map(file_name):
     credentials_map = {'access_token': ''}
@@ -32,7 +65,7 @@ def parse_credentials_map(file_name):
             loaded_credentials = yaml.load(file, Loader=yaml.FullLoader)
             credentials_map.update(loaded_credentials)
     except:
-        Console.print("Error opening credentials file: {file_name}".format(file_name=file_name))
+        Console.fail("opening credentials file: {file_name}".format(file_name=file_name))
     return credentials_map
 
 class Credentials:
@@ -142,7 +175,10 @@ class Command:
 
     def print(self, msg):
         #TODO: check for file output
-        print(msg)
+        Console.print(msg)
+
+    def warn(self, msg):
+        Console.warn(msg)
 
     def verbose(self):
         return self.args['--verbose']
@@ -190,16 +226,22 @@ class Command:
         return cmd_line
 
     def start_comment(self):
-        print("# GH Track output for cmd line: {cmd_line}".format(cmd_line=self.cmd_line()))
+        Console.verbose("# GH Track output for cmd line: {cmd_line}".format(cmd_line=self.cmd_line()))
 
     def fetch_repos(self):
         if not self.all_repos(): return
         if self.all_repos() and len(self.repos()) > 0:
-            self.warn("Warning: ignoring --repos since --all-repos is set")
+            self.warn("ignoring --repos since --all-repos is set")
         repo_names = []
         repos = self.client.repos(self.org())
         for repo in repos: repo_names.append(repo.name)
         self.args['--repos'] = repo_names
+
+    def output(self, output_map):
+        Console.print()
+        text_output = json.dumps(output_map, indent=4, sort_keys=True)
+        Console.print(text_output)
+        Console.ok("OK")
 
     def execute(self):
         self.fetch_repos()
@@ -243,7 +285,17 @@ class Commits(Command):
 
     def commits(self):
         self.start_comment()
-        print(self.users_commits) #DEBUG
+        Console.warn("getting commits for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
+            for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    commits_count = self.client.commits_count(repo, user, self.start_date(), self.end_date())
+                    self.users_commits[user][repo.name] = commits_count
+                count += 1
+        self.output(self.users_commits)
         return 0
 
 # reviews command group
@@ -262,7 +314,17 @@ class Reviews(Command):
 
     def reviews(self): 
         self.start_comment()
-        print(self.users_reviews) #DEBUG
+        Console.warn("getting reviews for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
+            for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    reviews_count = self.client.reviews_count(repo, user, self.start_date(), self.end_date())
+                    self.users_reviews[user][repo.name] = reviews_count
+                count += 1
+        self.output(self.users_reviews)
         return 0
 
 # issues command group
@@ -281,13 +343,17 @@ class Issues(Command):
 
     def issues(self):
         self.start_comment()
+        Console.warn("getting issues for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
         for user in self.users():
             repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
             for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
                 if repo.name in self.repos() and repo.name not in self.skip_repos():
-                    issue_count = self.client.issue_count(repo, user, self.start_date(), self.end_date(), 'open')
-                    self.users_issues[user][repo.name] = issue_count
-        print(self.users_issues) #DEBUG
+                    issues_count = self.client.issues_count(repo, user, self.start_date(), self.end_date(), 'open')
+                    self.users_issues[user][repo.name] = issues_count
+                count += 1
+        self.output(self.users_issues)
         return 0
 
 # stats command group

@@ -23,14 +23,16 @@ class TestGHClient(unittest.TestCase):
     def test_get_client(self):
         pass
 
-    # suggestions
-    def test_commits(self):
+    def test_repos(self):
         pass
 
-    def test_reviews(self):
+    def test_issues_count(self):
         pass
 
-    def test_issues(self):
+    def test_reviews_count(self):
+        pass
+
+    def test_commits_count(self):
         pass
 
 if __name__ == '__main__':
