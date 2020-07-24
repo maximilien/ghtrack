@@ -12,16 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
+import os, cli, unittest
 
-from cli import *
+from client import *
 
 class TestGHClient(unittest.TestCase):
     def setUp(self):
-        pass
+        cli.VERBOSE = True
+        credentials_filename = os.getcwd() + '/.ghtrack.yml'
+        credentials_map = cli.parse_credentials_map(credentials_filename)
+        access_token = credentials_map['access_token']
+        self.assertTrue(access_token != None)
+        self.assertTrue(access_token != '')
+
+        self.client = GHClient(access_token)
+        self.assertTrue(self.client != None)
 
     def test_get_client(self):
-        pass
+        ghclient = self.client.get_client()
+        self.assertTrue(self.client != None)
 
     def test_repos(self):
         pass

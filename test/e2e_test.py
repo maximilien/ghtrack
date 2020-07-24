@@ -81,30 +81,25 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         ght = GHT(cmd_line_args)
         rc = ght.execute()
         self.assertEqual(rc, 0)
+        self.assertTrue("processing repos" in ght.out)
         self.assertTrue("OK" in ght.out)
 
     def test_reviews(self):
-        cmd_line = "reviews january knative --users=maximilien --repos=client --verbose"
+        cmd_line = "reviews january knative --users=maximilien --repos=client,client-contrib --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
         self.assertEqual(rc, 0)
+        self.assertTrue("processing repos" in ght.out)
         self.assertTrue("OK" in ght.out)
 
     def test_issues(self):
-        cmd_line = "issues january knative --users=maximilien --repos=client --verbose"
+        cmd_line = "issues january knative --users=maximilien --repos=client,client-contrib --skip-repos=client-contrib --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
         self.assertEqual(rc, 0)
-        self.assertTrue("OK" in ght.out)
-
-    def _test_stats(self):
-        cmd_line = "stats january knative --commits --reviews --issues --users=maximilien --repos=client --verbose"
-        cmd_line_args = cmd_line.split(" ")
-        ght = GHT(cmd_line_args)
-        rc = ght.execute()
-        self.assertEqual(rc, 0)
+        self.assertTrue("processing repos" in ght.out)
         self.assertTrue("OK" in ght.out)
 
 class TestBasicWorkflow_csv(unittest.TestCase):
