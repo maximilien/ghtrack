@@ -21,6 +21,7 @@ HELP_STRING = """GitHub track
 
 Usage:
   ght commits MONTH ORG [options]
+  ght prs MONTH ORG [options]
   ght reviews MONTH ORG [options]
   ght issues MONTH ORG [options]
   ght stats MONTH ORG [options]
@@ -32,6 +33,7 @@ Options:
   --verbose                      Show all output.
 
   --commits                      Collect commits stats.
+  --prs                          Collect PRs stats.
   --reviews                      Collect reviews stats.
   --issues                       Collect issues stats.
 
@@ -85,7 +87,16 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("OK" in ght.out)
 
     def test_reviews(self):
-        cmd_line = "reviews january knative --users=maximilien --repos=client,client-contrib --verbose"
+        cmd_line = "reviews january knative --users=maximilien,octocat --repos=client,client-contrib --verbose"
+        cmd_line_args = cmd_line.split(" ")
+        ght = GHT(cmd_line_args)
+        rc = ght.execute()
+        self.assertEqual(rc, 0)
+        self.assertTrue("processing repos" in ght.out)
+        self.assertTrue("OK" in ght.out)
+
+    def test_prs(self):
+        cmd_line = "prs january knative --users=maximilien --repos=client --skip-repos=client-contrib --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()
@@ -94,7 +105,7 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("OK" in ght.out)
 
     def test_issues(self):
-        cmd_line = "issues january knative --users=maximilien --repos=client,client-contrib --skip-repos=client-contrib --verbose"
+        cmd_line = "issues january knative --users=maximilien,octocat --repos=client,client-contrib --skip-repos=client-contrib --verbose"
         cmd_line_args = cmd_line.split(" ")
         ght = GHT(cmd_line_args)
         rc = ght.execute()

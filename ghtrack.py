@@ -18,6 +18,7 @@
 
 Usage:
   ght commits MONTH ORG [options]
+  ght prs MONTH ORG [options]
   ght reviews MONTH ORG [options]
   ght issues MONTH ORG [options]
   ght stats MONTH ORG [options]
@@ -29,6 +30,7 @@ Options:
   --verbose                      Show all output.
 
   --commits                      Collect commits stats.
+  --prs                          Collect PRs stats.
   --reviews                      Collect reviews stats.
   --issues                       Collect issues stats.
 

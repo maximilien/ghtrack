@@ -14,19 +14,18 @@
 
 import os, cli, unittest
 
+from unittest.mock import patch, Mock
 from client import *
 
 class TestGHClient(unittest.TestCase):
     def setUp(self):
         cli.VERBOSE = True
-        credentials_filename = os.getcwd() + '/.ghtrack.yml'
-        credentials_map = cli.parse_credentials_map(credentials_filename)
-        access_token = credentials_map['access_token']
-        self.assertTrue(access_token != None)
-        self.assertTrue(access_token != '')
-
-        self.client = GHClient(access_token)
+        self.client = GHClient("fake-access-token")
         self.assertTrue(self.client != None)
+
+    @patch('github.Github')
+    def __create_mock_github(self, MockGithub):
+        return MockGithub()
 
     def test_get_client(self):
         ghclient = self.client.get_client()
@@ -35,13 +34,16 @@ class TestGHClient(unittest.TestCase):
     def test_repos(self):
         pass
 
-    def test_issues_count(self):
+    def test_commits_count(self):
         pass
 
     def test_reviews_count(self):
         pass
 
-    def test_commits_count(self):
+    def test_prs_count(self):
+        pass
+
+    def test_issues_count(self):
         pass
 
 if __name__ == '__main__':

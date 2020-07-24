@@ -36,14 +36,6 @@ class GHClient:
         ghorg = self.get_client().get_organization(org)
         return ghorg.get_repos()
 
-    def issues_count(self, repo, author_login, start_date, end_date, state='open'):
-        issues = repo.get_issues(state=state)
-        issues_count = 0
-        for i in issues:
-            if i.user.login == author_login and (i.created_at >= start_date and i.created_at <= end_date):
-                issues_count += 1
-        return issues_count
-
     def reviews_count(self, repo, author_login, start_date, end_date):
         prs = repo.get_pulls()
         reviews_count = 0
@@ -53,6 +45,22 @@ class GHClient:
                 if r.user.login == author_login and (r.submitted_at >= start_date and r.submitted_at <= end_date):
                     reviews_count += 1
         return reviews_count
+
+    def prs_count(self, repo, author_login, start_date, end_date, state='open'):
+        prs = repo.get_pulls(state=state)
+        prs_count = 0
+        for pr in prs:
+            if pr.user.login == author_login and (pr.created_at >= start_date and pr.created_at <= end_date):
+                prs_count += 1
+        return prs_count
+
+    def issues_count(self, repo, author_login, start_date, end_date, state='open'):
+        issues = repo.get_issues(state=state)
+        issues_count = 0
+        for i in issues:
+            if i.user.login == author_login and (i.created_at >= start_date and i.created_at <= end_date):
+                issues_count += 1
+        return issues_count
 
     def commits_count(self, repo, author_login, start_date, end_date):
         commits_count = 0

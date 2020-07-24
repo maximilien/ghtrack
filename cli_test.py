@@ -32,6 +32,7 @@ class TestCLI(TestCase):
                          'ORG': 'knative',
                          'MONTH': 'mar',
                          'commits': False,
+                         'prs': False,
                          'reviews': False,
                          'issues': False,
                          'stats': False}
@@ -42,6 +43,10 @@ class TestCLI(TestCase):
         self.assertTrue(cli.command() != None)
 
         self.arguments['reviews'] = True
+        cli = CLI(self.arguments)
+        self.assertTrue(cli.command() != None)
+
+        self.arguments['prs'] = True
         cli = CLI(self.arguments)
         self.assertTrue(cli.command() != None)
 
@@ -75,6 +80,7 @@ class CommandTestCase:
                          'MONTH': 'mar',
                          'commits': False,
                          'reviews': False,
+                         'prs': False,
                          'issues': False,
                          'stats': False}
         self.args = self.arguments
@@ -141,6 +147,7 @@ class CommandTestCase:
                          'MONTH': 'january',
                          'commits': False,
                          'reviews': False,
+                         'prs': False,
                          'issues': False,
                          'stats': True}
 
@@ -209,6 +216,8 @@ class CommandTestCase:
                 test_args['commits'] = True
             elif cmd == "reviews":
                 test_args['reviews'] = True
+            elif cmd == "prs":
+                test_args['prs'] = True
             elif cmd == 'issues':
                 test_args['issues'] = True
             else:
@@ -231,7 +240,7 @@ class TestCommits(CommandTestCase, TestCase):
     @patch('client.GHClient')
     def __create_mock_client_commits(self, MockGHClient):
         client = MockGHClient()
-        client.commits.return_value = 0
+        client.commits_count.return_value = 0
         return client
 
     def test_execute(self):
@@ -244,6 +253,87 @@ class TestCommits(CommandTestCase, TestCase):
         self.arguments['commits'] = True
         cli = CLI(self.arguments)
         client = self.__create_mock_client_commits()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+class TestReviews(CommandTestCase, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.arguments['reviews'] = True
+
+    def command_name(self):
+        return "reviews"
+
+    @patch('client.GHClient')
+    def __create_mock_client_reviews(self, MockGHClient):
+        client = MockGHClient()
+        client.reviews_count.return_value = 0
+        return client
+
+    def test_execute(self):
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_reviews()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+    def test_reviews(self):
+        self.arguments['commits'] = True
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_reviews()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+class TestPRs(CommandTestCase, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.arguments['prs'] = True
+
+    def command_name(self):
+        return "prs"
+
+    @patch('client.GHClient')
+    def __create_mock_client_prs(self, MockGHClient):
+        client = MockGHClient()
+        client.prs_count.return_value = 0
+        return client
+
+    def test_execute(self):
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_prs()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+    def test_prs(self):
+        self.arguments['commits'] = True
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_prs()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+class TestIssues(CommandTestCase, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.arguments['issues'] = True
+
+    def command_name(self):
+        return "issues"
+
+    @patch('client.GHClient')
+    def __create_mock_client_issues(self, MockGHClient):
+        client = MockGHClient()
+        client.issues_count.return_value = 0
+        return client
+
+    def test_execute(self):
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_issues()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+    def test_issues(self):
+        self.arguments['commits'] = True
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_issues()
         rc = cli.command(client).execute()
         self.assertEqual(rc, 0)
 

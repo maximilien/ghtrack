@@ -102,6 +102,8 @@ class CLI:
             return Commits(self.args, self.credentials, client)
         elif self.args.get('reviews') and self.args['reviews']:
             return Reviews(self.args, self.credentials, client)
+        elif self.args.get('prs') and self.args['prs']:
+            return PRs(self.args, self.credentials, client)
         elif self.args.get('issues') and self.args['issues']:
             return Issues(self.args, self.credentials, client)
         elif self.args.get('stats') and self.args['stats']:
@@ -174,7 +176,6 @@ class Command:
         self.print(msg + "\n")
 
     def print(self, msg):
-        #TODO: check for file output
         Console.print(msg)
 
     def warn(self, msg):
@@ -262,6 +263,8 @@ class Command:
             return self.commits
         elif self.args['reviews']:
             return self.reviews
+        elif self.args['prs']:
+            return self.prs
         elif self.args['issues']:
             return self.issues
         elif self.args['stats']:
@@ -325,6 +328,35 @@ class Reviews(Command):
                     self.users_reviews[user][repo.name] = reviews_count
                 count += 1
         self.output(self.users_reviews)
+        return 0
+
+# prs command group
+class PRs(Command):
+    def __init__(self, args, credentials, client):
+        self.args = args
+        self.users_prs = {} # {user: {repo_name: pr_count},...}
+        super().__init__(self.args, credentials, client)
+        self._init_users_stats(self.users_prs)
+
+    def __print(self, commit):
+        print("PRs: {args}".format(args=self.args))
+
+    def name(self):
+      return "prs"
+
+    def prs(self):
+        self.start_comment()
+        Console.warn("getting prs for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
+            for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    prs_count = self.client.prs_count(repo, user, self.start_date(), self.end_date(), 'open')
+                    self.users_prs[user][repo.name] = prs_count
+                count += 1
+        self.output(self.users_prs)
         return 0
 
 # issues command group
