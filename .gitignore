@@ -9,6 +9,8 @@ credentials.yml
 vendor
 tmp*
 *.csv
+*.json
+*.yml
 
 # C extensions
 *.so

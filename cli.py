@@ -16,6 +16,7 @@ import sys, yaml, json, csv, os.path
 
 from datetime import datetime
 from calendar import monthrange
+from tabulate import tabulate
 
 from client import GHClient
 
@@ -38,6 +39,10 @@ class Console:
 
     def print(msg=''):
         print(msg)
+
+    def println(no=1):
+        for i in range(no):
+            print()
 
     def ok(msg):
         print(f"{Colors.OKGREEN}{msg}{Colors.ENDC}".format(msg=str(msg)))
@@ -149,6 +154,34 @@ class Command:
                 if repo not in self.skip_repos():
                     users_stats[user][repo] = 0
 
+    def _print_output_text(self, output_map):
+        Console.println()
+        request_headers = ['org', 'state', 'year', 'month', 'data']
+        r = output_map['request']
+        print(tabulate([[r['org'], r['state'], r['year'], r['month'], r['data']]], headers=request_headers))
+        Console.println()
+        data_headers = ['user', 'repo', 'data', 'count']
+        data = []
+        for user in self.users():
+            for repo in self.repos():
+                if repo not in self.skip_repos():
+                    data.append([user, repo, output_map['request']['data'], output_map[user][repo]])
+        print(tabulate(data, headers=data_headers))
+        Console.println()
+
+    def _print_output_json(self, output_map):
+        Console.println()
+        text_output = json.dumps(output_map, indent=4, sort_keys=True)
+        with open(self.output_file(), 'w') as f:
+            f.write(text_output)
+        Console.print("wrote output file: {file}".format(file=self.output_file()))
+
+    def _print_output_yml(self, output_map):
+        pass
+
+    def _print_output_csv(self, output_map):
+        pass
+
     def check_month(self, month):
         if month in self.MONTHS_LOWER.keys():
             self.__month_number = self.MONTHS_LOWER[month]
@@ -239,6 +272,12 @@ class Command:
     def all_repos(self):
         return self.args['--all-repos']
 
+    def output(self):
+        return self.args['--output']
+
+    def output_file(self):
+        return self.args['--output-file']
+
     def cmd_line(self):
         repos_line = "--all-repos"
         if self.args['--all-repos'] == False:
@@ -259,10 +298,15 @@ class Command:
         for repo in repos: repo_names.append(repo.name)
         self.args['--repos'] = repo_names
 
-    def output(self, output_map):
-        Console.print()
-        text_output = json.dumps(output_map, indent=4, sort_keys=True)
-        Console.print(text_output)
+    def print_output(self, output_map):
+        if self.output() == 'json':
+            self._print_output_json(output_map)
+        elif self.output() == 'yml':
+            self._print_output_yml(output_map)
+        elif self.output() == 'csv':
+            self._print_output_csv(output_map)
+        else:
+            self._print_output_text(output_map)
         Console.ok("OK")
 
     def execute(self):
@@ -320,7 +364,7 @@ class Commits(Command):
                     commits_count = self.client.commits_count(repo, user, self.start_date(), self.end_date())
                     self.users_commits[user][repo.name] = commits_count
                 count += 1
-        self.output(self.users_commits)
+        self.print_output(self.users_commits)
         return 0
 
 # reviews command group
@@ -350,7 +394,7 @@ class Reviews(Command):
                     reviews_count = self.client.reviews_count(repo, user, self.start_date(), self.end_date())
                     self.users_reviews[user][repo.name] = reviews_count
                 count += 1
-        self.output(self.users_reviews)
+        self.print_output(self.users_reviews)
         return 0
 
 # prs command group
@@ -380,7 +424,7 @@ class PRs(Command):
                     prs_count = self.client.prs_count(repo, user, self.start_date(), self.end_date(), self.state())
                     self.users_prs[user][repo.name] = prs_count
                 count += 1
-        self.output(self.users_prs)
+        self.print_output(self.users_prs)
         return 0
 
 # issues command group
@@ -410,7 +454,7 @@ class Issues(Command):
                     issues_count = self.client.issues_count(repo, user, self.start_date(), self.end_date(), self.state())
                     self.users_issues[user][repo.name] = issues_count
                 count += 1
-        self.output(self.users_issues)
+        self.print_output(self.users_issues)
         return 0
 
 # stats command group

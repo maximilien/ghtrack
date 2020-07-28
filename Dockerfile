@@ -19,6 +19,7 @@ COPY test/ /ghtrack/test/
 RUN pip install PyGitHub==1.51
 RUN pip install PyYAML==5.3.1
 RUN pip install docopt==0.6.2
+RUN pip install tabulate==0.8.7
 
 # Build and run UTs
 RUN /ghtrack/hack/build.sh --test

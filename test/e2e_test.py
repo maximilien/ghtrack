@@ -46,7 +46,9 @@ Options:
   --skip-repos=repo1,repo2,...   List of repositories in GitHub organization to skip.
 
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
-  -o --output=FILE               The file path to save results CSV file.
+
+  -o --output=CSV                The format of the output: text, json, yml, or csv [default: text].
+  -f --output-file=output.csv    The file path to save results file.
 
   -h --help                      Show this screen.
   -v --version                   Show version."""
