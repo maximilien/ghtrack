@@ -46,7 +46,7 @@ class GHClient:
                     reviews_count += 1
         return reviews_count
 
-    def prs_count(self, repo, author_login, start_date, end_date, state='open'):
+    def prs_count(self, repo, author_login, start_date, end_date, state='close'):
         prs = repo.get_pulls(state=state)
         prs_count = 0
         for pr in prs:
@@ -54,7 +54,7 @@ class GHClient:
                 prs_count += 1
         return prs_count
 
-    def issues_count(self, repo, author_login, start_date, end_date, state='open'):
+    def issues_count(self, repo, author_login, start_date, end_date, state='close'):
         issues = repo.get_issues(state=state)
         issues_count = 0
         for i in issues:

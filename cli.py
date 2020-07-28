@@ -134,6 +134,14 @@ class Command:
                 else:
                     args[option] = [args[option]]
 
+    def _init_request(self, map):
+        map['request'] = {}
+        map['request']['org'] = self.org()
+        map['request']['state'] = self.state()
+        map['request']['year'] = self.year()
+        map['request']['month'] = self.month()
+        map['request']['data'] = self.name()
+
     def _init_users_stats(self, users_stats):
         for user in self.users():
             users_stats[user] = {}
@@ -163,12 +171,22 @@ class Command:
             return False
         return True
 
+    def check_state(self, state):
+        if state == 'closed':
+            return True
+        elif state == 'open':
+            return True
+        return False
+
     def check_required_options(self):
         if not self.check_month(self.month()):
-            self.print("Invalid month '{month}'".format(month=self.month()))
+            Console.warn("Invalid month '{month}'".format(month=self.month()))
             return False
         elif not self.check_org(self.org()):
-            self.print("Invalid org value '{org}'".format(org=self.org()))
+            Console.warn("Invalid org value '{org}'".format(org=self.org()))
+            return False
+        elif not self.check_state(self.state()):
+            Console.warn("Invalid state value '{state}'".format(state=self.state()))
             return False
         return True
 
@@ -183,6 +201,9 @@ class Command:
 
     def verbose(self):
         return self.args['--verbose']
+
+    def state(self):
+        return self.args['--state']
 
     def year(self):
         return datetime.now().year
@@ -278,6 +299,7 @@ class Commits(Command):
         self.args = args
         self.users_commits = {} # {user: {repo_name: commit_count},...}
         super().__init__(self.args, credentials, client)
+        self._init_request(self.users_commits)
         self._init_users_stats(self.users_commits)
 
     def __print(self, commit):
@@ -307,6 +329,7 @@ class Reviews(Command):
         self.args = args
         self.users_reviews = {} # {user: {repo_name: review_count},...}
         super().__init__(self.args, credentials, client)
+        self._init_request(self.users_reviews)
         self._init_users_stats(self.users_reviews)
 
     def __print(self, commit):
@@ -336,6 +359,7 @@ class PRs(Command):
         self.args = args
         self.users_prs = {} # {user: {repo_name: pr_count},...}
         super().__init__(self.args, credentials, client)
+        self._init_request(self.users_prs)
         self._init_users_stats(self.users_prs)
 
     def __print(self, commit):
@@ -353,7 +377,7 @@ class PRs(Command):
             for repo in repos:
                 Console.progress(count, total, status="processing repos".format(name=repo.name))
                 if repo.name in self.repos() and repo.name not in self.skip_repos():
-                    prs_count = self.client.prs_count(repo, user, self.start_date(), self.end_date(), 'open')
+                    prs_count = self.client.prs_count(repo, user, self.start_date(), self.end_date(), self.state())
                     self.users_prs[user][repo.name] = prs_count
                 count += 1
         self.output(self.users_prs)
@@ -365,6 +389,7 @@ class Issues(Command):
         self.args = args
         self.users_issues = {} # {user: {repo_name: issue_count},...}
         super().__init__(self.args, credentials, client)
+        self._init_request(self.users_issues)
         self._init_users_stats(self.users_issues)
 
     def __print(self, commit):
@@ -382,7 +407,7 @@ class Issues(Command):
             for repo in repos:
                 Console.progress(count, total, status="processing repos".format(name=repo.name))
                 if repo.name in self.repos() and repo.name not in self.skip_repos():
-                    issues_count = self.client.issues_count(repo, user, self.start_date(), self.end_date(), 'open')
+                    issues_count = self.client.issues_count(repo, user, self.start_date(), self.end_date(), self.state())
                     self.users_issues[user][repo.name] = issues_count
                 count += 1
         self.output(self.users_issues)

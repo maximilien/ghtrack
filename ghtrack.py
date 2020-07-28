@@ -34,6 +34,8 @@ Options:
   --reviews                      Collect reviews stats.
   --issues                       Collect issues stats.
 
+  -s --state=closed              State one of 'open' or 'closed' [default: closed].
+
   --users=user1,user2,...        List of GitHub user IDs to track.
 
   --all-repos                    Track all repositories in GitHub organization.
