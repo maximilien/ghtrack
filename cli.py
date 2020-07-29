@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys, yaml, json, csv, os.path
+import io, sys, yaml, json, csv, os.path
 
 from datetime import datetime
 from calendar import monthrange
@@ -154,33 +154,69 @@ class Command:
                 if repo not in self.skip_repos():
                     users_stats[user][repo] = 0
 
+    def _write_map_as_csv(self, output_stream, output_map):
+        writer = csv.DictWriter(output_stream, output_map.keys())
+        writer.writeheader()
+        writer.writerow(output_map)
+
+    def _write_list_as_csv(self, output_stream, output_list):
+        writer = csv.writer(output_stream)
+        for item in output_list:
+            writer.writerow(item)
+
+    def _extract_user_repo_data(self, request_data, users_repos_map):
+        users_repos_data = []
+        data_headers = ['user', 'repo', 'data', 'count']
+        users_repos_data.append(data_headers)
+        for user in self.users():
+            for repo in self.repos():
+                if repo not in self.skip_repos():
+                    users_repos_data.append([user, repo, request_data, users_repos_map[user][repo]])
+        return users_repos_data
+
     def _print_output_text(self, output_map):
         Console.println()
         request_headers = ['org', 'state', 'year', 'month', 'data']
         r = output_map['request']
         print(tabulate([[r['org'], r['state'], r['year'], r['month'], r['data']]], headers=request_headers))
         Console.println()
-        data_headers = ['user', 'repo', 'data', 'count']
-        data = []
-        for user in self.users():
-            for repo in self.repos():
-                if repo not in self.skip_repos():
-                    data.append([user, repo, output_map['request']['data'], output_map[user][repo]])
-        print(tabulate(data, headers=data_headers))
+        users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
+        print(tabulate(users_repos_data[1:], headers=users_repos_data[0]))
         Console.println()
 
     def _print_output_json(self, output_map):
         Console.println()
         text_output = json.dumps(output_map, indent=4, sort_keys=True)
-        with open(self.output_file(), 'w') as f:
-            f.write(text_output)
-        Console.print("wrote output file: {file}".format(file=self.output_file()))
+        if self.output_file() == None or self.output_file() == '':
+            Console.print(text_output)
+        else:
+            with open(self.output_file(), 'w') as f:
+                f.write(text_output)
+            Console.print("wrote output file: {file}".format(file=self.output_file()))
 
     def _print_output_yml(self, output_map):
-        pass
+        Console.println()
+        if self.output_file() == None or self.output_file() == '':
+            Console.print(yaml.dump(output_map))
+        else:
+            with open(self.output_file(), 'w') as f:
+                yaml.dump(output_map, f, default_flow_style=False)
+            Console.print("wrote output file: {file}".format(file=self.output_file()))
 
     def _print_output_csv(self, output_map):
-        pass
+        request_map = output_map['request']
+        Console.println()
+        if self.output_file() == None or self.output_file() == '':
+            output_stream = io.StringIO()
+            self._write_map_as_csv(output_stream, request_map)
+            users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
+            self._write_list_as_csv(output_stream, users_repos_data)
+            Console.print(output_stream.getvalue())
+        else:
+            with open(self.output_file(), 'w', newline='') as csv_file:
+                self._write_map_as_csv(csv_file, request_map)
+                users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
+                self._write_list_as_csv(csv_file, users_repos_data)
 
     def check_month(self, month):
         if month in self.MONTHS_LOWER.keys():
@@ -299,11 +335,11 @@ class Command:
         self.args['--repos'] = repo_names
 
     def print_output(self, output_map):
-        if self.output() == 'json':
+        if self.output() == 'json' or self.output() == 'JSON':
             self._print_output_json(output_map)
-        elif self.output() == 'yml':
+        elif self.output() == 'yml' or self.output() == 'yaml' or self.output() == 'YML' or self.output() == 'YAML':
             self._print_output_yml(output_map)
-        elif self.output() == 'csv':
+        elif self.output() == 'csv' or self.output() == 'CSV':
             self._print_output_csv(output_map)
         else:
             self._print_output_text(output_map)

@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, sys, subprocess, unittest
+import os, sys, subprocess, unittest, tempfile
+
 sys.path.insert(0, "{current_dir}/..".format(current_dir=os. getcwd()))
 
 from cli import parse_credentials_map
@@ -68,7 +69,7 @@ class GHT:
             return cpe.returncode
         return 0
 
-class TestBasicWorkflow_stdout(unittest.TestCase):
+class TestCommonWorkflow_stdout(unittest.TestCase):
     def test_help(self):
         ght = GHT(["--help"])
         rc = ght.execute()
@@ -81,6 +82,7 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertTrue("GH Track v" in ght.out)
 
+class TestBasicWorkflow_stdout(unittest.TestCase):
     def test_commits(self):
         cmd_line = "commits january knative --users=maximilien --repos=client --verbose"
         cmd_line_args = cmd_line.split(" ")
@@ -117,8 +119,149 @@ class TestBasicWorkflow_stdout(unittest.TestCase):
         self.assertTrue("processing repos" in ght.out)
         self.assertTrue("OK" in ght.out)
 
-class TestBasicWorkflow_csv(unittest.TestCase):
-    pass
+class TestBasicWorkflow_json(unittest.TestCase):
+    def test_commits(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "commits january knative -o json --output-file={tmp_file} --users=maximilien --repos=client".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
 
-class TestAdvancedWorkflow_csv(unittest.TestCase):
-    pass
+    def test_reviews(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "reviews january knative -o json --output-file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_prs(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "prs january knative --output=json --output-file={tmp_file} --users=maximilien --repos=client --skip-repos=client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_issues(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "issues january knative --output=JSON -f {tmp_file} --users=maximilien,octocat --repos=client,client-contrib --skip-repos=client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+class TestBasicWorkflow_yml(unittest.TestCase):
+    def test_commits(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "commits january knative -o yaml --output-file={tmp_file} --users=maximilien --repos=client".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_reviews(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "reviews january knative -o YAML --output-file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_prs(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "prs january knative --output=YAML --output-file={tmp_file} --users=maximilien --repos=client --skip-repos=client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_issues(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "issues january knative --output=yml -f {tmp_file} --users=maximilien,octocat --repos=client,client-contrib --skip-repos=client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+class TestBasicWorkflow_csv(unittest.TestCase):
+    def test_commits(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "commits january knative -o csv --output-file={tmp_file} --users=maximilien --repos=client".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_reviews(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "reviews january knative -o CSV --output-file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_prs(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "prs january knative --output=CSV --output-file={tmp_file} --users=maximilien --repos=client --skip-repos=client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_issues(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "issues january knative --output=csv -f {tmp_file} --users=maximilien,octocat --repos=client,client-contrib --skip-repos=client-contrib".format(tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.assertEqual(rc, 0)
+            self.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
