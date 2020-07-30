@@ -32,19 +32,19 @@ class TestGHClient(unittest.TestCase):
         self.assertTrue(self.client != None)
 
     def test_repos(self):
-        pass
+        pass #TODO
 
     def test_commits_count(self):
-        pass
+        pass #TODO
 
     def test_reviews_count(self):
-        pass
+        pass #TODO
 
     def test_prs_count(self):
-        pass
+        pass #TODO
 
     def test_issues_count(self):
-        pass
+        pass #TODO
 
 if __name__ == '__main__':
     unittest.main()

@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, tempfile
+import io, os, tempfile
 
 from unittest import TestCase
 from unittest.mock import patch, Mock
+
+from datetime import datetime
 
 from cli import *
 
@@ -161,6 +163,140 @@ class CommandTestCase:
                          'prs': False,
                          'issues': False,
                          'stats': True}
+
+    def test_check_month(self):
+        cli = CLI(self.TEST_ARGS)
+        self.assertTrue(cli.command().check_month(cli.command().month()))
+        self.assertFalse(cli.command().check_month('fake-month'))
+
+    def test_check_org(self):
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_org(cli.command().org()))
+        self.assertFalse(cli.command().check_org(''))
+        self.assertFalse(cli.command().check_org(None))
+
+    def test_check_state(self):
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_state('open'))
+        self.assertTrue(cli.command().check_state('closed'))
+        self.assertFalse(cli.command().check_state('fake-state'))
+        self.assertFalse(cli.command().check_state(''))
+        self.assertFalse(cli.command().check_state(None))
+
+    def test_check_required_options(self):
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_required_options())
+
+        test_args['MONTH'] = 'fake-month'
+        self.assertFalse(cli.command().check_required_options())
+
+        test_args['ORG'] = ''
+        self.assertFalse(cli.command().check_required_options())
+
+        test_args['--state'] = 'fake-state'
+        self.assertFalse(cli.command().check_required_options())
+
+    def test_println(self):
+        stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        cli.command().println("fake-println\n")
+        self.assertTrue("fake-println\n" in sys.stdout.getvalue())
+        sys.stdout = stdout
+
+    def test_print(self):
+        stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        cli.command().print("fake-print")
+        self.assertTrue("fake-print" in sys.stdout.getvalue())
+        sys.stdout = stdout
+
+    def test_warn(self):
+        stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        cli.command().warn("fake-warn")
+        self.assertTrue("fake-warn" in sys.stdout.getvalue())
+        sys.stdout = stdout
+
+    def test_verbose(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--verbose'] = True
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().verbose())
+
+    def test_state(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--state'] = 'open'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().state(), 'open')
+
+    def test_year(self):
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().year(), datetime.now().year)
+
+    def test_start_date(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['MONTH'] = 'march'
+        cli = CLI(test_args)
+        year = cli.command().year()
+        self.assertEqual(cli.command().start_date(), datetime(year=year, month=3, day=1))
+
+    def test_end_date(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['MONTH'] = 'march'
+        cli = CLI(test_args)
+        year = cli.command().year()
+        self.assertEqual(cli.command().end_date(), datetime(year=year, month=3, day=31))
+
+    def test_month_last_day(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['MONTH'] = 'march'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().month_last_day(), 31)
+
+        test_args['MONTH'] = 'November'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().month_last_day(), 30)
+
+    def test_month_number(self):
+        test_args = self.TEST_ARGS.copy()
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().month_number(), 1)
+
+        test_args['MONTH'] = 'march'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().month_number(), 3)
+
+    def test_output(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--output'] = 'CSV'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().output(), 'CSV')
+
+        test_args['--output'] = None
+        test_args['-o'] = 'JSON'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().output(), 'JSON')
+
+    def test_output_file(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--output-file'] = 'fake/output/file'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().output_file(), 'fake/output/file')
+
+        test_args['--output-file'] = None
+        test_args['-f'] = 'fake/output/file2'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().output_file(), 'fake/output/file2')
 
     def test_month(self):
         test_args = self.TEST_ARGS.copy()

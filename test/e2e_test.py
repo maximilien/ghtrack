@@ -82,6 +82,8 @@ class TestCommonWorkflow_stdout(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertTrue("GH Track v" in ght.out)
 
+#TODO: consolidate in common class TestBasicWorkflow 
+# with 'text', 'json', 'yml' parameter
 class TestBasicWorkflow_stdout(unittest.TestCase):
     def test_commits(self):
         cmd_line = "commits january knative --users=maximilien --repos=client --verbose"

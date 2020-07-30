@@ -288,6 +288,9 @@ class Command:
         return range[1]
 
     def month_number(self):
+        if self.__month_number == 0:
+            checked = self.check_month(self.month())
+            if not checked: Console.warn("month value: '{month}' is not valid".format(month=self.month()))
         return self.__month_number
 
     def month(self):
@@ -309,10 +312,16 @@ class Command:
         return self.args['--all-repos']
 
     def output(self):
-        return self.args['--output']
+        if self.args['--output']:
+            return self.args['--output']
+        else:
+            return self.args['-o']
 
     def output_file(self):
-        return self.args['--output-file']
+        if self.args['--output-file']:
+            return self.args['--output-file']
+        else:
+            return self.args['-f']
 
     def cmd_line(self):
         repos_line = "--all-repos"
