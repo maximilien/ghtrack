@@ -23,7 +23,7 @@ from cli import *
 
 class TestCLI(TestCase):
     def setUp(self):
-        self.arguments = {'--access-token': '',
+        self.arguments = {'--access-token': 'fake-access-token',
                          '--credentials': './.ghtrack.yml',
                          '--users': [],
                          '--repos': [],
@@ -74,7 +74,7 @@ class TestCLI(TestCase):
 
 class CommandTestCase:
     def setUp(self):
-        self.arguments = {'--access-token': '',
+        self.arguments = {'--access-token': 'fake-access-token',
                          '--credentials': './.ghtrack.yml',
                          '--users': [],
                          '--all-repos': False,
@@ -145,24 +145,24 @@ class CommandTestCase:
             self.assertTrue(repo_name in self.arguments['--repos'])
 
     TEST_ARGS = {'--access-token': 'fake-access-token',
-                         '--credentials': './.ghtrack.yml',
-                         '--users': ['fake-user1', 'fake-user2'],
-                         '--all-repos': False,
-                         '--repos': ['fake-repo1', 'fake-repo2'],
-                         '--skip-repos': ['fake-repo3'],
-                         '--help': False,
-                         '--verbose': False,
-                         '--version': False,
-                         '--state': 'closed',
-                         '--output': 'text',
-                         '--output-file': '',
-                         'ORG': 'fake-org',
-                         'MONTH': 'january',
-                         'commits': False,
-                         'reviews': False,
-                         'prs': False,
-                         'issues': False,
-                         'stats': True}
+                 '--credentials': './.ghtrack.yml',
+                 '--users': ['fake-user1', 'fake-user2'],
+                 '--all-repos': False,
+                 '--repos': ['fake-repo1', 'fake-repo2'],
+                 '--skip-repos': ['fake-repo3'],
+                 '--help': False,
+                 '--verbose': False,
+                 '--version': False,
+                 '--state': 'closed',
+                 '--output': 'text',
+                 '--output-file': '',
+                 'ORG': 'fake-org',
+                 'MONTH': 'january',
+                 'commits': False,
+                 'reviews': False,
+                 'prs': False,
+                 'issues': False,
+                 'stats': True}
 
     def test_check_month(self):
         cli = CLI(self.TEST_ARGS)

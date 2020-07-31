@@ -47,6 +47,9 @@ class Console:
     def ok(msg):
         print(f"{Colors.OKGREEN}{msg}{Colors.ENDC}".format(msg=str(msg)))
 
+    def error(msg):
+        Console.fail(msg)
+
     def fail(msg):
         print(f"{Colors.FAIL}Error: {msg}{Colors.ENDC}".format(msg=str(msg)))
 
@@ -64,21 +67,28 @@ class Console:
         sys.stdout.flush()
 
 def parse_credentials_map(file_name):
-    credentials_map = {'access_token': ''}
+    credentials_map = {'gh_access_token': ''}
     try:
         with open(file_name) as file:
             loaded_credentials = yaml.load(file, Loader=yaml.FullLoader)
             credentials_map.update(loaded_credentials)
     except:
-        Console.fail("opening credentials file: {file_name}".format(file_name=file_name))
+        if VERBOSE:
+            Console.warn("opening credentials file: {file_name}".format(file_name=file_name))
     return credentials_map
 
 class Credentials:
     def __init__(self, hash):
         self.hash = hash
 
+    def __gh_access_token_from_environment(self):
+        return os.getenv('GH_ACCESS_TOKEN', '')
+
     def access_token(self):
-        return self.hash['access_token']
+        access_token = self.__gh_access_token_from_environment()
+        if access_token == '' or access_token == None:
+            access_token = self.hash['gh_access_token']
+        return access_token
 
 class CLI:
     def __init__(self, args):
@@ -95,9 +105,9 @@ class CLI:
     def __setup_credentials(self):
         credentials_hash = self.__parse_credentials()
         if self.args['--access-token']:
-            credentials_hash['access_token'] = self.args['--access-token']
+            credentials_hash['gh_access_token'] = self.args['--access-token']
         else:
-            self.args['--access-token'] = credentials_hash['access_token']
+            self.args['--access-token'] = credentials_hash['gh_access_token']
         return Credentials(credentials_hash)
 
     def command(self, client=None):
@@ -247,6 +257,15 @@ class Command:
             return True
         return False
 
+    def check_credentials(self):
+        if self.credentials == None:
+            Console.warn("Invalid credentials '{credentials}'".format(credentials=self.credentials))
+            return False
+        elif self.credentials.access_token() == '' or self.credentials.access_token() == None:
+            Console.warn("Invalid credentials Github access token '{access_token}'".format(access_token=self.credentials.access_token()))
+            return False
+        return True
+
     def check_required_options(self):
         if not self.check_month(self.month()):
             Console.warn("Invalid month '{month}'".format(month=self.month()))
@@ -356,8 +375,10 @@ class Command:
 
     def execute(self):
         self.fetch_repos()
-        if not self.check_required_options():
-            return -1
+        if not self.check_credentials():
+            return 1
+        elif not self.check_required_options():
+            return 1
         func = self.dispatch()
         rc = func()
         if rc == None:
@@ -366,7 +387,7 @@ class Command:
             if isinstance(rc, int):
                 return rc
             else:
-                return -1
+                return 1
 
     def dispatch(self):
         if self.args['commits']:
@@ -399,7 +420,7 @@ class Commits(Command):
 
     def commits(self):
         self.start_comment()
-        Console.warn("getting commits for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
+        Console.print("Getting commits for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
         for user in self.users():
             repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount
@@ -429,7 +450,7 @@ class Reviews(Command):
 
     def reviews(self): 
         self.start_comment()
-        Console.warn("getting reviews for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
+        Console.print("Getting reviews for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
         for user in self.users():
             repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount
@@ -459,7 +480,7 @@ class PRs(Command):
 
     def prs(self):
         self.start_comment()
-        Console.warn("getting prs for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
+        Console.print("Getting prs for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
         for user in self.users():
             repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount
@@ -489,7 +510,7 @@ class Issues(Command):
 
     def issues(self):
         self.start_comment()
-        Console.warn("getting issues for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
+        Console.print("Getting issues for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
         for user in self.users():
             repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount

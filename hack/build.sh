@@ -184,9 +184,13 @@ py_e2e() {
 }
 
 check_credentials() {
-  if [ ! -f ./.ghtrack.yml ]; then
-    echo "🔥 Could not find .ghtrack.yml.yml file"
-    exit -1
+  gh_access_token=${GH_ACCESS_TOKEN:-''}
+  if [[ -z "$gh_access_token" ]]; then
+    echo "⚠️  GH_ACCESS_TOKEN not set, looking for ./.ghtrack.yml"
+    if [ ! -f ./.ghtrack.yml ]; then
+      echo "🔥 Could not find .ghtrack.yml.yml file"
+      exit -1
+    fi
   fi
 }
 

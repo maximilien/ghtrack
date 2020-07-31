@@ -61,12 +61,14 @@ class GHT:
 
     def execute(self):
         try:
-            access_token = parse_credentials_map('../.ghtrack.yml')['access_token']
+            access_token = os.getenv('GH_ACCESS_TOKEN', '')
+            if access_token == '':
+                access_token = parse_credentials_map('../.ghtrack.yml')['gh_access_token']
             output = subprocess.check_output(["python3", "../ghtrack.py", "--access-token={access_token}".format(access_token=access_token)] + self.cmds)
             self.out = output.decode("utf-8").rstrip()
-        except CalledProcessError as cpe:
-            self.out = cpe.output
-            return cpe.returncode
+        except Exception as e:
+            self.out = e.output
+            return e.returncode
         return 0
 
 class BasicWorkflow:

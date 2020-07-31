@@ -61,5 +61,5 @@ if __name__ == '__main__':
     command = CLI(args).command()
     rc = command.execute()
     if rc != 0:
-        cli.Console.error("Error executing command: {rc}".format(rc=rc))
+        Console.error("executing command: {rc}".format(rc=rc))
         sys.exit(rc)
