@@ -15,8 +15,8 @@
 from github import Github
 
 class GHClient:
-    def __init__(self, access_token):
-        self.client = None
+    def __init__(self, access_token, client=None):
+        self.client = client
         self.access_token = access_token
 
     def __week_in(self, week_date, start_date, end_date):

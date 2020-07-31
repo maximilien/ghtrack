@@ -15,36 +15,105 @@
 import os, cli, unittest
 
 from unittest.mock import patch, Mock
+from datetime import datetime, timedelta
 from client import *
 
 class TestGHClient(unittest.TestCase):
     def setUp(self):
         cli.VERBOSE = True
-        self.client = GHClient("fake-access-token")
+        self.start_date = datetime.now()
+        ghclient = self.__create_mock_github()
+        self.client = GHClient("fake-access-token", ghclient)
         self.assertTrue(self.client != None)
 
     @patch('github.Github')
-    def __create_mock_github(self, MockGithub):
-        return MockGithub()
+    @patch('github.Organization')
+    def __create_mock_github(self, MockGithub, MockOrganization):
+        client = MockGithub()
+        org = MockOrganization()
+        org.name = 'fake-org'
+
+        class FakeUser:
+            def __init__(self, no):
+                self.no = no
+                self.login = "user{no}".format(no=no)
+                self.created_at = datetime.now()
+
+        class Fake:
+            def __init__(self,no):
+                self.no = no
+                self.user = FakeUser(no)
+                self.created_at = datetime.now()
+
+        class FakeReview(Fake):
+            def __init__(self, no):
+                Fake.__init__(self, no)
+                self.submitted_at = self.created_at
+
+        class FakePullRequest(Fake):
+            def __init__(self, no):
+                Fake.__init__(self, no)
+
+            def get_reviews(self):
+                return [FakeReview(0), FakeReview(1), FakeReview(2)]
+
+        class FakeIssue(Fake):
+            def __init__(self, no):
+                Fake.__init__(self, no)
+
+        class FakeStatContributor(Fake):
+            def __init__(self, no):
+                Fake.__init__(self, no)
+                self.author = self.user
+                class FakeWeek:
+                    def __init__(self):
+                        self.w = datetime.now()
+                self.weeks = [FakeWeek(), FakeWeek(), FakeWeek()]
+
+        class FakeRepo:
+            def __init__(self, name):
+                self.name = name
+
+            def get_pulls(self, state='closed'):
+                return [FakePullRequest(0), FakePullRequest(1), FakePullRequest(2)]
+
+            def get_issues(self, state='closed'):
+                return [FakeIssue(0), FakeIssue(1), FakeIssue(2)]
+
+            def get_stats_contributors(self):
+                return [FakeStatContributor(0), FakeStatContributor(1), FakeStatContributor(2)]
+
+        org.get_repos.return_value = [FakeRepo('fake-repo0'), FakeRepo('fake-repo1'), FakeRepo('fake-repo2')]
+        client.get_organization.return_value = org
+        return client
 
     def test_get_client(self):
         ghclient = self.client.get_client()
-        self.assertTrue(self.client != None)
+        self.assertTrue(ghclient != None)
 
     def test_repos(self):
-        pass #TODO
-
-    def test_commits_count(self):
-        pass #TODO
+        self.assertTrue(self.client.repos('fake-org') != None)
+        self.assertTrue(len(self.client.repos('fake-org')) == 3)
 
     def test_reviews_count(self):
-        pass #TODO
+        fake_repo = self.client.repos('fake-org')[0]
+        reviews_count = self.client.reviews_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(reviews_count == 3)
 
     def test_prs_count(self):
-        pass #TODO
+        fake_repo = self.client.repos('fake-org')[0]
+        prs_count = self.client.prs_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(prs_count == 1)
 
     def test_issues_count(self):
-        pass #TODO
+        fake_repo = self.client.repos('fake-org')[0]
+        issues_count = self.client.issues_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(issues_count == 1)
+
+    def test_commits_count(self):
+        fake_repo = self.client.repos('fake-org')[0]
+        commits_count = self.client.commits_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(commits_count == 3)
 
 if __name__ == '__main__':
     unittest.main()
