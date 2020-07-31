@@ -57,7 +57,7 @@ from docopt import docopt
 from cli import *
 
 if __name__ == '__main__':
-    args = docopt(__doc__, version='GH Track v0.2.1')
+    args = docopt(__doc__, version='GH Track v0.3')
     command = CLI(args).command()
     rc = command.execute()
     if rc != 0:
