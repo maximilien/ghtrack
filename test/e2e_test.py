@@ -49,7 +49,7 @@ Options:
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
 
   -o --output=CSV                The format of the output: text, json, yml, or csv [default: text].
-  -f --output-file=output.csv    The file path to save results file.
+  -f --file=output.csv           The file path to save results file.
 
   -h --help                      Show this screen.
   -v --version                   Show version."""
@@ -76,9 +76,37 @@ class BasicWorkflow:
         self.output = output
         self.tc = unittest.TestCase()
 
+    def _test_stats_commits_prs(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "stats june knative --commits --prs --output={output} -f {tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(output=self.output, tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.tc.assertEqual(rc, 0)
+            self.tc.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def _test_stats_reviews_issues(self):
+        tmp_file, tmp_filepath = tempfile.mkstemp()
+        cmd_line = "stats july knative --reviews --issues --o {output} --file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(output=self.output, tmp_file=tmp_filepath)
+        cmd_line_args = cmd_line.split(" ")
+        try:
+            ght = GHT(cmd_line_args)
+            rc = ght.execute()
+            self.tc.assertEqual(rc, 0)
+            self.tc.assertTrue("OK" in ght.out)
+        finally:
+            os.remove(tmp_filepath)
+
+    def test_stats(self):
+        self._test_stats_reviews_issues()
+        self._test_stats_commits_prs()
+
     def test_commits(self):
         tmp_file, tmp_filepath = tempfile.mkstemp()
-        cmd_line = "commits january knative -o {output} --output-file={tmp_file} --users=maximilien --repos=client".format(output=self.output, tmp_file=tmp_filepath)
+        cmd_line = "commits january knative -o {output} --file={tmp_file} --users=maximilien --repos=client".format(output=self.output, tmp_file=tmp_filepath)
         cmd_line_args = cmd_line.split(" ")
         try:
             ght = GHT(cmd_line_args)
@@ -90,7 +118,7 @@ class BasicWorkflow:
 
     def test_reviews(self):
         tmp_file, tmp_filepath = tempfile.mkstemp()
-        cmd_line = "reviews january knative -o {output} --output-file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(output=self.output, tmp_file=tmp_filepath)
+        cmd_line = "reviews january knative -o {output} --file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(output=self.output, tmp_file=tmp_filepath)
         cmd_line_args = cmd_line.split(" ")
         try:
             ght = GHT(cmd_line_args)
@@ -102,7 +130,7 @@ class BasicWorkflow:
 
     def test_prs(self):
         tmp_file, tmp_filepath = tempfile.mkstemp()
-        cmd_line = "prs january knative --output={output} --output-file={tmp_file} --users=maximilien --repos=client --skip-repos=client-contrib".format(output=self.output, tmp_file=tmp_filepath)
+        cmd_line = "prs january knative --output={output} --file={tmp_file} --users=maximilien --repos=client --skip-repos=client-contrib".format(output=self.output, tmp_file=tmp_filepath)
         cmd_line_args = cmd_line.split(" ")
         try:
             ght = GHT(cmd_line_args)
@@ -149,3 +177,6 @@ class TestBasicWorkflow(unittest.TestCase):
 
     def test_issues(self):
         BasicWorkflow('text').test_issues()
+
+    def test_stats(self):
+        BasicWorkflow('text').test_stats()

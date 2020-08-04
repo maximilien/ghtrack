@@ -72,7 +72,7 @@ Options:
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
 
   -o --output=CSV                The format of the output: text, json, yml, or csv [default: text].
-  -f --output-file=output.csv    The file path to save results file.
+  -f --file=output.csv           The file path to save results file.
 
   -h --help                      Show this screen.
   -v --version                   Show version.
@@ -88,7 +88,7 @@ Usage:
 ght commits march knative --users=maximilien \
                           --all-repos \
                           --output=CSV \
-                          --output-file=maximilien-march-knative.csv
+                          --file=maximilien-march-knative.csv
 ```
 
 Description:
@@ -106,7 +106,7 @@ ght prs apr knative --users=maximilien \
                     --all-repos \
                     --skip-repos=client,client-contrib \
                     --output=yaml \
-                    --output-file=maximilien-april-all-but-client-client-repos.yml
+                    --file=maximilien-april-all-but-client-client-repos.yml
 ```
 
 Description:
@@ -123,7 +123,7 @@ Usage:
 ght reviews july  knative --users=maximilien,mattmore \
                           --repos=client \
                           --output=JSON \
-                          --output-file=maximilien-mattmore-july-client.json
+                          --file=maximilien-mattmore-july-client.json
 ```
 
 Description:

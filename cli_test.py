@@ -33,9 +33,9 @@ class TestCLI(TestCase):
                          '--version': False,
                          '--state': 'closed',
                          '--output': 'text',
-                         '--output-file': '',
+                         '--file': '',
                          '--output': 'text',
-                         '--output-file': '',
+                         '--file': '',
                          'ORG': 'knative',
                          'MONTH': 'mar',
                          'commits': False,
@@ -85,7 +85,7 @@ class CommandTestCase:
                          '--version': False,
                          '--state': 'closed',
                          '--output': 'text',
-                         '--output-file': '',
+                         '--file': '',
                          'ORG': 'knative',
                          'MONTH': 'mar',
                          'commits': False,
@@ -153,9 +153,13 @@ class CommandTestCase:
                  '--help': False,
                  '--verbose': False,
                  '--version': False,
+                 '--commits': False,
+                 '--prs': False,
+                 '--reviews': False,
+                 '--issues': False,
                  '--state': 'closed',
-                 '--output': 'text',
-                 '--output-file': '',
+                 '--output': None,
+                 '--file': None,
                  'ORG': 'fake-org',
                  'MONTH': 'january',
                  'commits': False,
@@ -282,21 +286,11 @@ class CommandTestCase:
         cli = CLI(test_args)
         self.assertEqual(cli.command().output(), 'CSV')
 
-        test_args['--output'] = None
-        test_args['-o'] = 'JSON'
-        cli = CLI(test_args)
-        self.assertEqual(cli.command().output(), 'JSON')
-
-    def test_output_file(self):
+    def test_file(self):
         test_args = self.TEST_ARGS.copy()
-        test_args['--output-file'] = 'fake/output/file'
+        test_args['--file'] = 'fake/output/file'
         cli = CLI(test_args)
-        self.assertEqual(cli.command().output_file(), 'fake/output/file')
-
-        test_args['--output-file'] = None
-        test_args['-f'] = 'fake/output/file2'
-        cli = CLI(test_args)
-        self.assertEqual(cli.command().output_file(), 'fake/output/file2')
+        self.assertEqual(cli.command().file(), 'fake/output/file')
 
     def test_month(self):
         test_args = self.TEST_ARGS.copy()
@@ -397,7 +391,6 @@ class TestCommits(CommandTestCase, TestCase):
         self.assertEqual(rc, 0)
 
     def test_commits(self):
-        self.arguments['commits'] = True
         cli = CLI(self.arguments)
         client = self.__create_mock_client_commits()
         rc = cli.command(client).execute()
@@ -424,7 +417,6 @@ class TestReviews(CommandTestCase, TestCase):
         self.assertEqual(rc, 0)
 
     def test_reviews(self):
-        self.arguments['commits'] = True
         cli = CLI(self.arguments)
         client = self.__create_mock_client_reviews()
         rc = cli.command(client).execute()
@@ -451,7 +443,6 @@ class TestPRs(CommandTestCase, TestCase):
         self.assertEqual(rc, 0)
 
     def test_prs(self):
-        self.arguments['commits'] = True
         cli = CLI(self.arguments)
         client = self.__create_mock_client_prs()
         rc = cli.command(client).execute()
@@ -478,9 +469,41 @@ class TestIssues(CommandTestCase, TestCase):
         self.assertEqual(rc, 0)
 
     def test_issues(self):
-        self.arguments['commits'] = True
         cli = CLI(self.arguments)
         client = self.__create_mock_client_issues()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+class TestStats(CommandTestCase, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.arguments['stats'] = True
+        self.arguments['--commits'] = True
+        self.arguments['--prs'] = True
+        self.arguments['--reviews'] = True
+        self.arguments['--issues'] = True
+
+    def command_name(self):
+        return "stats"
+
+    @patch('client.GHClient')
+    def __create_mock_client_stats(self, MockGHClient):
+        client = MockGHClient()
+        client.issues_count.return_value = 0
+        client.commits_count.return_value = 1
+        client.reviews_count.return_value = 2
+        client.prs_count.return_value = 3
+        return client
+
+    def test_execute(self):
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_stats()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+    def test_stats(self):
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_stats()
         rc = cli.command(client).execute()
         self.assertEqual(rc, 0)
 

@@ -149,13 +149,13 @@ class Command:
                 else:
                     args[option] = [args[option]]
 
-    def _init_request(self, map):
+    def _init_request(self, map, data_name):
         map['request'] = {}
         map['request']['org'] = self.org()
         map['request']['state'] = self.state()
         map['request']['year'] = self.year()
         map['request']['month'] = self.month()
-        map['request']['data'] = self.name()
+        map['request']['data'] = data_name
 
     def _init_users_stats(self, users_stats):
         for user in self.users():
@@ -197,36 +197,81 @@ class Command:
     def _print_output_json(self, output_map):
         Console.println()
         text_output = json.dumps(output_map, indent=4, sort_keys=True)
-        if self.output_file() == None or self.output_file() == '':
+        if self.file() == None or self.file() == '':
             Console.print(text_output)
         else:
-            with open(self.output_file(), 'w') as f:
+            with open(self.file(), 'w') as f:
                 f.write(text_output)
-            Console.print("wrote output file: {file}".format(file=self.output_file()))
+            Console.print("wrote output file: {file}".format(file=self.file()))
 
     def _print_output_yml(self, output_map):
         Console.println()
-        if self.output_file() == None or self.output_file() == '':
+        if self.file() == None or self.file() == '':
             Console.print(yaml.dump(output_map))
         else:
-            with open(self.output_file(), 'w') as f:
+            with open(self.file(), 'w') as f:
                 yaml.dump(output_map, f, default_flow_style=False)
-            Console.print("wrote output file: {file}".format(file=self.output_file()))
+            Console.print("wrote output file: {file}".format(file=self.file()))
 
     def _print_output_csv(self, output_map):
         request_map = output_map['request']
         Console.println()
-        if self.output_file() == None or self.output_file() == '':
+        if self.file() == None or self.file() == '':
             output_stream = io.StringIO()
             self._write_map_as_csv(output_stream, request_map)
             users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
             self._write_list_as_csv(output_stream, users_repos_data)
             Console.print(output_stream.getvalue())
         else:
-            with open(self.output_file(), 'w', newline='') as csv_file:
+            with open(self.file(), 'w', newline='') as csv_file:
                 self._write_map_as_csv(csv_file, request_map)
                 users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
                 self._write_list_as_csv(csv_file, users_repos_data)
+
+    def _update_users_issues(self):
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
+            for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    issues_count = self.client.issues_count(repo, user, self.start_date(), self.end_date(), self.state())
+                    self.users_issues[user][repo.name] = issues_count
+                count += 1
+
+    def _update_users_prs(self):
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
+            for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    prs_count = self.client.prs_count(repo, user, self.start_date(), self.end_date(), self.state())
+                    self.users_prs[user][repo.name] = prs_count
+                count += 1
+
+    def _update_users_reviews(self):
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
+            for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    reviews_count = self.client.reviews_count(repo, user, self.start_date(), self.end_date())
+                    self.users_reviews[user][repo.name] = reviews_count
+                count += 1
+
+    def _update_users_commits(self):
+        for user in self.users():
+            repos = self.client.repos(self.org())
+            count, total = 1, repos.totalCount
+            for repo in repos:
+                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                if repo.name in self.repos() and repo.name not in self.skip_repos():
+                    commits_count = self.client.commits_count(repo, user, self.start_date(), self.end_date())
+                    self.users_commits[user][repo.name] = commits_count
+                count += 1
+
 
     def check_month(self, month):
         if month in self.MONTHS_LOWER.keys():
@@ -331,16 +376,22 @@ class Command:
         return self.args['--all-repos']
 
     def output(self):
-        if self.args['--output']:
-            return self.args['--output']
-        else:
-            return self.args['-o']
+        return self.args['--output']
 
-    def output_file(self):
-        if self.args['--output-file']:
-            return self.args['--output-file']
-        else:
-            return self.args['-f']
+    def file(self):
+        return self.args['--file']
+
+    def stats_commits(self):
+        return self.args['--commits']
+
+    def stats_reviews(self):
+        return self.args['--reviews']
+
+    def stats_prs(self):
+        return self.args['--prs']
+
+    def stats_issues(self):
+        return self.args['--issues']
 
     def cmd_line(self):
         repos_line = "--all-repos"
@@ -371,7 +422,6 @@ class Command:
             self._print_output_csv(output_map)
         else:
             self._print_output_text(output_map)
-        Console.ok("OK")
 
     def execute(self):
         self.fetch_repos()
@@ -409,11 +459,8 @@ class Commits(Command):
         self.args = args
         self.users_commits = {} # {user: {repo_name: commit_count},...}
         super().__init__(self.args, credentials, client)
-        self._init_request(self.users_commits)
+        self._init_request(self.users_commits, self.name())
         self._init_users_stats(self.users_commits)
-
-    def __print(self, commit):
-        print("Commits: {args}".format(args=self.args))
 
     def name(self):
       return "commits"
@@ -421,16 +468,9 @@ class Commits(Command):
     def commits(self):
         self.start_comment()
         Console.print("Getting commits for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
-        for user in self.users():
-            repos = self.client.repos(self.org())
-            count, total = 1, repos.totalCount
-            for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
-                if repo.name in self.repos() and repo.name not in self.skip_repos():
-                    commits_count = self.client.commits_count(repo, user, self.start_date(), self.end_date())
-                    self.users_commits[user][repo.name] = commits_count
-                count += 1
+        self._update_users_commits()
         self.print_output(self.users_commits)
+        Console.ok("OK")
         return 0
 
 # reviews command group
@@ -439,11 +479,8 @@ class Reviews(Command):
         self.args = args
         self.users_reviews = {} # {user: {repo_name: review_count},...}
         super().__init__(self.args, credentials, client)
-        self._init_request(self.users_reviews)
+        self._init_request(self.users_reviews, self.name())
         self._init_users_stats(self.users_reviews)
-
-    def __print(self, commit):
-        print("Reviews: {args}".format(args=self.args))
 
     def name(self):
       return "reviews"
@@ -451,16 +488,9 @@ class Reviews(Command):
     def reviews(self): 
         self.start_comment()
         Console.print("Getting reviews for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
-        for user in self.users():
-            repos = self.client.repos(self.org())
-            count, total = 1, repos.totalCount
-            for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
-                if repo.name in self.repos() and repo.name not in self.skip_repos():
-                    reviews_count = self.client.reviews_count(repo, user, self.start_date(), self.end_date())
-                    self.users_reviews[user][repo.name] = reviews_count
-                count += 1
+        self._update_users_reviews()
         self.print_output(self.users_reviews)
+        Console.ok("OK")
         return 0
 
 # prs command group
@@ -469,11 +499,8 @@ class PRs(Command):
         self.args = args
         self.users_prs = {} # {user: {repo_name: pr_count},...}
         super().__init__(self.args, credentials, client)
-        self._init_request(self.users_prs)
+        self._init_request(self.users_prs, self.name())
         self._init_users_stats(self.users_prs)
-
-    def __print(self, commit):
-        print("PRs: {args}".format(args=self.args))
 
     def name(self):
       return "prs"
@@ -481,16 +508,9 @@ class PRs(Command):
     def prs(self):
         self.start_comment()
         Console.print("Getting prs for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
-        for user in self.users():
-            repos = self.client.repos(self.org())
-            count, total = 1, repos.totalCount
-            for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
-                if repo.name in self.repos() and repo.name not in self.skip_repos():
-                    prs_count = self.client.prs_count(repo, user, self.start_date(), self.end_date(), self.state())
-                    self.users_prs[user][repo.name] = prs_count
-                count += 1
+        self._update_users_prs()
         self.print_output(self.users_prs)
+        Console.ok("OK")
         return 0
 
 # issues command group
@@ -499,11 +519,8 @@ class Issues(Command):
         self.args = args
         self.users_issues = {} # {user: {repo_name: issue_count},...}
         super().__init__(self.args, credentials, client)
-        self._init_request(self.users_issues)
+        self._init_request(self.users_issues, self.name())
         self._init_users_stats(self.users_issues)
-
-    def __print(self, commit):
-        print("Issues: {args}".format(args=self.args))
 
     def name(self):
       return "issues"
@@ -511,30 +528,50 @@ class Issues(Command):
     def issues(self):
         self.start_comment()
         Console.print("Getting issues for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
-        for user in self.users():
-            repos = self.client.repos(self.org())
-            count, total = 1, repos.totalCount
-            for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
-                if repo.name in self.repos() and repo.name not in self.skip_repos():
-                    issues_count = self.client.issues_count(repo, user, self.start_date(), self.end_date(), self.state())
-                    self.users_issues[user][repo.name] = issues_count
-                count += 1
+        self._update_users_issues()
         self.print_output(self.users_issues)
+        Console.ok("OK")
         return 0
 
 # stats command group
 class Stats(Command):
     def __init__(self, args, credentials, client):
         self.args = args
+        self.users_commits = {} # {user: {repo_name: commit_count},...}
+        self.users_prs = {}     # {user: {repo_name: pr_count},...}
+        self.users_issues = {}  # {user: {repo_name: issue_count},...}
+        self.users_reviews = {} # {user: {repo_name: review_count},...}
         super().__init__(self.args, credentials, client)
+        for data_tuple in [('commits', self.users_commits),
+                           ('prs', self.users_prs),
+                           ('issues', self.users_issues),
+                           ('reviews', self.users_reviews)]:
+            self._init_request(data_tuple[1], data_tuple[0])
+            self._init_users_stats(data_tuple[1])
 
-    def __print(self, commit):
-        print("Stats: {args}".format(args=self.args))
+    def print_stats_output(self):
+        if self.stats_commits():
+            self.print_output(self.users_commits)
+        if self.stats_prs():
+            self.print_output(self.users_prs)
+        if self.stats_reviews():
+            self.print_output(self.users_reviews)
+        if self.stats_issues():
+            self.print_output(self.users_issues)
 
     def name(self):
       return "stats"
 
     def stats(self):
         self.start_comment()
+        if self.stats_commits():
+            self._update_users_commits()
+        if self.stats_prs():
+            self._update_users_prs()
+        if self.stats_reviews():
+            self._update_users_reviews()
+        if self.stats_issues():
+            self._update_users_issues()
+        self.print_stats_output()
+        Console.ok("OK")
         return 0

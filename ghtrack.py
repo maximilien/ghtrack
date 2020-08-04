@@ -45,7 +45,7 @@ Options:
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
 
   -o --output=CSV                The format of the output: text, json, yml, or csv [default: text].
-  -f --output-file=output.csv    The file path to save results file.
+  -f --file=output.csv           The file path to save results file.
 
   -h --help                      Show this screen.
   -v --version                   Show version.
