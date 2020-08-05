@@ -1,39 +1,47 @@
 # ghtrack
 
-Automate getting tracking commits, reviews, and issues for group of GitHub users.
+Automate getting tracking commits, prs, reviews, and issues for group of GitHub users in repos from one organization.
 
 # Getting started
 
 There are two things you need to get started with the ghtrack CLI. From now on called CLI or `ght`.
 
-First, you need to get a developer or admin account on your `GitHub` ID. When you do, can create an access token to use the GitHub APIs v3 or later.
+First, you need to get a developer or admin account for your `GitHub` ID. [Register](https://developer.github.com/program/), it's free. When you do, you can then create an access token to access and use the GitHub APIs v3 or later.
 
-Second, you need to setup your [environment](#Environment). See that section for details. However, note that you can either setup your local machine with Python3 and dependencies or better use the `Dockerfile` to create a container with all the details. You can also use one of my publish images: `dockerhub.io/drmax/ghtrack:latest`.
+Second, you need to setup your [environment](#Environment). See that section for details. However, note also that you can either setup your local machine with Python3 and the dependencies, or, alternatively, use the [`Dockerfile`](Dockerfile) to create a container with the latest version and all the dependencies setup for you. 
+
+You can also use one of my published images or the latest one here: `docker.io/drmax/ghtrack:latest`. And then run the image locally and start an interactive BASH session with:
+
+```bash
+docker run -it docker.io/drmax/ghtrack:latest /bin/bash
+```
 
 ## Credentials
 
-Once you have created access token for your Github account. Make sure to copy and keep it safe.
+Once you have an access token for your Github account, make sure to copy and keep it safe.
 
-You will need to use it while invoking the CLI. You can either pass the key with each invokation, via an environment valurable, or adding it to a file.
+You will need to use this access token while invoking the CLI. You can either pass the key with each invocation, via an environment variable, or adding it to a file.
 
-For environment variable, just set it as follows:
+1. Pass it locally using the `--access-token <GitHub access token here>`, without the '<>'
+
+2. For environment variable, just set it as follows:
 
 ```bash
-export GH_ACCESS_TOKEN=[GitHub access token here]
+export GH_ACCESS_TOKEN=<GitHub access token here>
 ```
 
-Alternatively, you can create a `.ghtrack.yml` file and add the key in there. Then `ght` will find the credentials for you automatically.
+3. Alternatively, you can create a `.ghtrack.yml` file and add the key in there. Then `ght` will find the credentials for you automatically.
 
 Create your `./.ghtrack.yml` file with a command as follows or with your favorite editor:
 
 ```bash
 cat > .ghtrack.yml <<EOF
 # GitHub
-gh_access_token: [GitHub access token here]
+gh_access_token: <GitHub access token here>
 EOF
 ```
 
-*WARNING* needless to say that you should not share not checkin to GitHub nor make public any access token or credentials data.
+*WARNING* needless to say that you should not share, nor checkin to GitHub, nor make public any access token or any credentials data.
 
 ## User guide
 
@@ -80,7 +88,7 @@ Options:
 
 ### `commits`
 
-The `commits` command group is used to get commit stats.
+The `commits` command group is used to get commit statistics.
 
 Usage:
 
@@ -97,7 +105,7 @@ Collects all commits data for GitHub user 'maximilien' during the month of 'marc
 
 ### `prs`
 
-The `prs` command group is used to get commit stats.
+The `prs` command group is used to get commit statistics.
 
 Usage:
 
@@ -111,28 +119,29 @@ ght prs apr knative --users=maximilien \
 
 Description:
 
-Collects all commits data for GitHub user 'maximilien' during the month of 'april' (three letter abreviations OK) in all repos of the 'knative' organization, except 'client' and 'client-contrib', and saves it into YAML file.
+Collects all PRs data for GitHub user 'maximilien' during the month of 'april' (three letter abreviations are OK) in all repos of the 'knative' organization, except 'client' and 'client-contrib', and saves it into YAML file.
 
 ### `reviews`
 
-The `reviews` command group is used to get reviews data on open and closed PRs.
+The `reviews` command group is used to get reviews statistics on 'open' or 'closed' (default) PRs.
 
 Usage:
 
 ```bash
 ght reviews july  knative --users=maximilien,mattmore \
                           --repos=client \
+                          --state=open \
                           --output=JSON \
                           --file=maximilien-mattmore-july-client.json
 ```
 
 Description:
 
-Collects all reviews data for GitHub users 'maximilien' and 'mattmore' during the month of 'july' in the 'client' repo of the 'knative' organization and saves it into JSON file.
+Collects all reviews statistics, on 'open' PRs, for GitHub users 'maximilien' and 'mattmore' during the month of 'july' in the 'client' repo of the 'knative' organization and saves it into JSON file.
 
 ### `issues`
 
-The `issues` command group is used to get issue data on open and closed issues.
+The `issues` command group is used to get issue statistics on 'open' or 'closed' (default) issues.
 
 Usage:
 
@@ -144,23 +153,26 @@ ght issues november knative --users=maximilien \
 
 Description:
 
-Collects all issues data for GitHub user 'maximilien' during the month of 'november' in 'client-contrib' repo of the 'knative' organization and shows it as text in standard output.
+Collects all issues statistics, counting only issues that are 'closed', for GitHub user 'maximilien' during the month of 'november' in 'client-contrib' repo of the 'knative' organization and shows it as text in standard output.
 
 ### `stats`
 
-The `stats` command group is used to get stats summary data for commits, reviews, and issues.
+The `stats` command group is used to get statistics summary data for commits, prs, reviews, and issues.
 
 Usage:
 
 ```bash
 ght stats june knative --users=maximilien \
+                       --commits --prs --reviews --issues \
                        --all-repos \
                        --skip-repos=client,client-contrib
 ```
 
 Description:
 
-Collects stats summary (commits, reviews, prs, and issues) data for GitHub user 'maximilien' during the month of 'june' in all repos except 'client' and 'client-contrib' repos of the 'knative' organization and display it in standard output.
+Collects stats summary ('--commits', '--prs', '--reviews', and '--issues') data for GitHub user 'maximilien' during the month of 'june' in all repos except 'client' and 'client-contrib' repos of the 'knative' organization and display it in standard output.
+
+You can of course specify a subset of flags: '--commits', '--prs', '--reviews', and '--issues', and only collect these statistics.
 
 ## Workflows
 
@@ -168,7 +180,7 @@ TODO
 
 # Developing
 
-We welcome your contributions. You can do so by opening [issues](/issues) for features and bugs you find. Or you can submit [PRs](/pulls) when you have specific changes you would like to make. These changes can be both for source code, tests, and docs.
+We welcome your contributions. You can do so by opening [issues](/issues) for features and bugs you find. Or you can submit [PRs](/pulls) when you have specific changes you would like to suggest. These changes can be both for source code, tests, and docs.
 
 ## Environment
 
@@ -193,21 +205,25 @@ Also run the CLI help with: `ght --help`
 
 ### Container
 
-Alternatively, you can use `docker.io/maximilien/ghtrack:latest` public image. Instantiate it. Get access to it via a command line shell and use the tool there. This image has all dependencies and code for `ght`.
+Alternatively, you can use `docker.io/drmax/ghtrack:latest` public image. Instantiate it. Get access to it via a command line shell and use the tool there. This image has all dependencies and code for `ght`. The following command should do this:
+
+```bash
+docker run -it docker.io/drmax/ghtrack:latest /bin/bash
+```
 
 ### Create image
 
-If you set your the environment variable with your 'DOCKER_USERNAME' and you install the docker tooling, then you can generate a docker image that you can use to run this tool using `./hack/build.sh --docker`. The image will contain all dependencies and this tool.
+If you set your the environment variable 'DOCKER_USERNAME' with your [Docker Hub](https://hub.docker.com/) username and you install the [docker tooling](https://docs.docker.com/get-docker/), then you can generate a Docker container image by running `./hack/build.sh --docker`. The image will contain all dependencies and this tool source code.
 
 ## Testing
 
-The code includes both unit tests and integration tests. You can run all unit tests by invoking: `./hack/build.sh --test`.
+The code includes both unit tests and integration tests. You can run all unit tests by invoking: `./hack/build.sh --tests`.
 
-Integration tests will require you to have a GitHub access token in a file called `.ghtrack.yml`. You can then invoke `./build/build.sh --e2e` to run the integration tests.
+Integration tests will require you to have a GitHub access token in a file called `.ghtrack.yml` or setting the access token in an environment variable called `GH_ACCESS_TOKEN`. You can then invoke `./build/build.sh --e2e` to run the integration tests.
 
-You can run both types of tests with `./hack/build.sh --tests`
+You can run both types of tests in sequence with `./hack/build.sh --tests`
 
-Once you can run all the tests. Please make your changes, add more tests, verify that all tests are passing. Create and submit a PR.
+Once you can run all the tests. Please make your changes, add more tests, verify that all tests are still passing. Create and submit a PR.
 
 # Next steps?
 
@@ -215,4 +231,4 @@ The following are immediate next steps:
 
 1. add some common workflows (e.g., get reviews in last two months for k8s or knative)
 2. look how to speed up some of the operations by caching intermediary data or Github APIs calls
-3. make e2e tests faster
+3. make e2e tests faster (which might get there with solution for 2)
