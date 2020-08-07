@@ -234,9 +234,9 @@ class Command:
                 self._write_list_as_csv(csv_file, users_repos_data)
 
     def _update_users_issues(self):
+        repos = self.client.repos(self.org())
         for user in self.users():
             Console.print("Getting 'issues' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount
             for repo in repos:
                 Console.progress(count, total, status="processing repos".format(name=repo.name))
@@ -249,9 +249,9 @@ class Command:
             Console.println()
 
     def _update_users_prs(self):
+        repos = self.client.repos(self.org())
         for user in self.users():
             Console.print("Getting 'prs' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount
             for repo in repos:
                 Console.progress(count, total, status="processing repos".format(name=repo.name))
@@ -264,9 +264,9 @@ class Command:
             Console.println()
 
     def _update_users_reviews(self):
+        repos = self.client.repos(self.org())
         for user in self.users():
             Console.print("Getting 'reviews' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount
             for repo in repos:
                 Console.progress(count, total, status="processing repos".format(name=repo.name))
@@ -279,9 +279,9 @@ class Command:
             Console.println()
 
     def _update_users_commits(self):
+        repos = self.client.repos(self.org())
         for user in self.users():
             Console.print("Getting 'commits' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            repos = self.client.repos(self.org())
             count, total = 1, repos.totalCount
             for repo in repos:
                 Console.progress(count, total, status="processing repos".format(name=repo.name))

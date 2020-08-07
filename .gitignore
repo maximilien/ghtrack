@@ -11,6 +11,7 @@ tmp*
 *.csv
 *.json
 *.yml
+*.sh
 
 # C extensions
 *.so
