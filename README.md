@@ -48,7 +48,7 @@ EOF
 The following is a brief user guide for the `ght` CLI. You can see an abreviated version of this user guide by running `ght --help`
 
 ```bash
-➜  ghtrack git:(master) ✗ ./ght -h
+➜  ghtrack git:(master) ./ght -h
 GitHub track
 
 Usage:
@@ -76,6 +76,7 @@ Options:
   --all-repos                    Track all repositories in GitHub organization.
   --repos=repo1,repo2,...        List of repositories in GitHub organization to track.
   --skip-repos=repo1,repo2,...   List of repositories in GitHub organization to skip.
+  --show-all-stats               Show all stats even when 0 or non-existant for a user [default: False].
 
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
 
@@ -84,30 +85,31 @@ Options:
 
   -h --help                      Show this screen.
   -v --version                   Show version.
-```
+  ```
 
 ### `commits`
 
 The `commits` command group is used to get commit statistics.
 
-Usage:
+#### Usage
 
 ```bash
 ght commits march knative --users=maximilien \
                           --all-repos \
                           --output=CSV \
+                          --show-all-stats \
                           --file=maximilien-march-knative.csv
 ```
 
-Description:
+#### Description
 
-Collects all commits data for GitHub user 'maximilien' during the month of 'march' in all repos of the 'knative' organization and saves it into CSV file.
+Collects all commits data for GitHub user 'maximilien' during the month of 'march' in all repos of the 'knative' organization and saves it into CSV file. All stats are displayed, so if 'maximilien' has 0 commits in a repo, the output will display 0.
 
 ### `prs`
 
 The `prs` command group is used to get commit statistics.
 
-Usage:
+#### Usage
 
 ```bash
 ght prs apr knative --users=maximilien \
@@ -117,49 +119,94 @@ ght prs apr knative --users=maximilien \
                     --file=maximilien-april-all-but-client-client-repos.yml
 ```
 
-Description:
+#### Description
 
-Collects all PRs data for GitHub user 'maximilien' during the month of 'april' (three letter abreviations are OK) in all repos of the 'knative' organization, except 'client' and 'client-contrib', and saves it into YAML file.
+Collects all PRs data for GitHub user 'maximilien' during the month of 'april' (three letter abreviations are OK) in all repos of the 'knative' organization, except 'client' and 'client-contrib', and saves it into YAML file. Since `--show-all-stats` is not used, only repos for which user has `prs` will show in output.
 
 ### `reviews`
 
 The `reviews` command group is used to get reviews statistics on 'open' or 'closed' (default) PRs.
 
-Usage:
+#### Usage
 
 ```bash
 ght reviews july  knative --users=maximilien,mattmore \
                           --repos=client \
                           --state=open \
-                          --output=JSON \
-                          --file=maximilien-mattmore-july-client.json
+                          --output=JSON
 ```
 
-Description:
+#### Description
 
-Collects all reviews statistics, on 'open' PRs, for GitHub users 'maximilien' and 'mattmore' during the month of 'july' in the 'client' repo of the 'knative' organization and saves it into JSON file.
+Collects all reviews statistics, on 'open' PRs, for GitHub users 'maximilien' and 'mattmore' during the month of 'july' in the 'client' repo of the 'knative' organization and displays JSON in terminal.
+
+#### Example Output
+
+```bash
+Getting reviews for 2 users in 1 repos via GitHub APIs... be patient
+Getting 'reviews' for 'maximilien' in organization: 'knative'
+[============================================================] 100.0% ...processing repos
+Getting 'reviews' for 'mattmore' in organization: 'knative'
+[=========================================================---] 94.7% ...processing repos
+
+{
+    "mattmore": {
+        "client": 0
+    },
+    "maximilien": {
+        "client": 2
+    },
+    "request": {
+        "data": "reviews",
+        "month": "july",
+        "org": "knative",
+        "state": "open",
+        "year": 2020
+    }
+}
+Showing only non-zero stats, use --show-all-stats to view all
+OK
+```
 
 ### `issues`
 
 The `issues` command group is used to get issue statistics on 'open' or 'closed' (default) issues.
 
-Usage:
+#### Usage
 
 ```bash
 ght issues november knative --users=maximilien \
                             --repos=client,client-contrib \
+                            --show-all-stats \
                             --output=txt
 ```
 
-Description:
+#### Description
 
-Collects all issues statistics, counting only issues that are 'closed', for GitHub user 'maximilien' during the month of 'november' in 'client-contrib' repo of the 'knative' organization and shows it as text in standard output.
+Collects all issues statistics, counting only issues that are 'closed', for GitHub user 'maximilien' during the month of 'november' in 'client-contrib' repo of the 'knative' organization and shows it as text in standard output. Show all stats, even when 0.
+
+#### Example Output
+
+```bash
+Getting issues for 1 users in 2 repos via GitHub APIs... be patient
+Getting 'issues' for 'maximilien' in organization: 'knative'
+[============================================================] 100.0% ...processing repos
+
+org        year  month     data    state
+-------  ------  --------  ------  -------
+knative    2020  november  issues  closed
+
+user        repo            data      count
+----------  --------------  ------  -------
+maximilien  client          issues        0
+maximilien  client-contrib  issues        0
+```
 
 ### `stats`
 
 The `stats` command group is used to get statistics summary data for commits, prs, reviews, and issues.
 
-Usage:
+#### Usage
 
 ```bash
 ght stats june knative --users=maximilien \
@@ -168,7 +215,7 @@ ght stats june knative --users=maximilien \
                        --skip-repos=client,client-contrib
 ```
 
-Description:
+#### Description
 
 Collects stats summary ('--commits', '--prs', '--reviews', and '--issues') data for GitHub user 'maximilien' during the month of 'june' in all repos except 'client' and 'client-contrib' repos of the 'knative' organization and display it in standard output.
 
