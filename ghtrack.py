@@ -41,6 +41,7 @@ Options:
   --all-repos                    Track all repositories in GitHub organization.
   --repos=repo1,repo2,...        List of repositories in GitHub organization to track.
   --skip-repos=repo1,repo2,...   List of repositories in GitHub organization to skip.
+  --show-all-stats               Show all stats even when 0 or non-existant for a user [default: False].
 
   -a --access-token=ACCESS_TOKEN Your GitHub access token to access GitHub APIs.
 

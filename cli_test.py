@@ -31,6 +31,7 @@ class TestCLI(TestCase):
                          '--help': False,
                          '--verbose': False,
                          '--version': False,
+                         '--show-all-stats': False,
                          '--state': 'closed',
                          '--output': 'text',
                          '--file': '',
@@ -83,6 +84,7 @@ class CommandTestCase:
                          '--help': False,
                          '--verbose': False,
                          '--version': False,
+                         '--show-all-stats': False,
                          '--state': 'closed',
                          '--output': 'text',
                          '--file': '',
@@ -153,6 +155,7 @@ class CommandTestCase:
                  '--help': False,
                  '--verbose': False,
                  '--version': False,
+                 '--show-all-stats': False,
                  '--commits': False,
                  '--prs': False,
                  '--reviews': False,
@@ -347,6 +350,18 @@ class CommandTestCase:
         test_args['--all-repos'] = True
         cli = CLI(test_args)
         self.assertEqual(cli.command().all_repos(), True)
+
+    def test_show_all_stats_True(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--show-all-stats'] = True
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().show_all_stats(), True)
+
+    def test_show_all_stats_False(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--show-all-stats'] = False
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().show_all_stats(), False)
 
     def test_cmd_line(self):
         for cmd in ["commits", "reviews", "issues"]:

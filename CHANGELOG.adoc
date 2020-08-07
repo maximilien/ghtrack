@@ -13,6 +13,19 @@
 ////
 
 
+## v0.3.4 (2020-08-06)
+
+[cols="1,10,3", options="header", width="100%"]
+|===
+| | Description | PR
+
+| ✨
+| show better progress when running `stats`
+
+| ✨
+| added --show-all-stats options to avoid always showing 0 stats
+|===
+
 ## v0.3.3 (2020-08-05)
 
 [cols="1,10,3", options="header", width="100%"]
@@ -20,7 +33,7 @@
 | | Description | PR
 
 | ✨
-| First release with complete features
+| first release with complete features
 |===
 
 '''
