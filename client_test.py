@@ -68,6 +68,7 @@ class TestGHClient(unittest.TestCase):
                 class FakeWeek:
                     def __init__(self):
                         self.w = datetime.now()
+                        self.c = 1
                 self.weeks = [FakeWeek(), FakeWeek(), FakeWeek()]
 
         class FakeRepo:
@@ -77,7 +78,7 @@ class TestGHClient(unittest.TestCase):
             def get_pulls(self, state='closed'):
                 return [FakePullRequest(0), FakePullRequest(1), FakePullRequest(2)]
 
-            def get_issues(self, state='closed'):
+            def get_issues(self, since=datetime.now(), state='closed'):
                 return [FakeIssue(0), FakeIssue(1), FakeIssue(2)]
 
             def get_stats_contributors(self):

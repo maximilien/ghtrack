@@ -55,7 +55,7 @@ class GHClient:
         return prs_count
 
     def issues_count(self, repo, author_login, start_date, end_date, state='close'):
-        issues = repo.get_issues(state=state)
+        issues = repo.get_issues(state=state, since=start_date)
         issues_count = 0
         for i in issues:
             if i.user.login == author_login and (i.created_at >= start_date and i.created_at <= end_date):
@@ -68,5 +68,5 @@ class GHClient:
             if sc.author.login == author_login:
                 for w in sc.weeks:
                     if self.__week_in(w.w, start_date, end_date): 
-                        commits_count += 1
+                        commits_count += w.c
         return commits_count

@@ -205,7 +205,7 @@ class Command:
         if self.file() == None or self.file() == '':
             Console.print(text_output)
         else:
-            with open(self.file(), 'w') as f:
+            with open(self.file(), 'a') as f:
                 f.write(text_output)
             Console.print("wrote output file: {file}".format(file=self.file()))
 
@@ -214,7 +214,7 @@ class Command:
         if self.file() == None or self.file() == '':
             Console.print(yaml.dump(output_map))
         else:
-            with open(self.file(), 'w') as f:
+            with open(self.file(), 'a') as f:
                 yaml.dump(output_map, f, default_flow_style=False)
             Console.print("wrote output file: {file}".format(file=self.file()))
 
@@ -228,7 +228,7 @@ class Command:
             self._write_list_as_csv(output_stream, users_repos_data)
             Console.print(output_stream.getvalue())
         else:
-            with open(self.file(), 'w', newline='') as csv_file:
+            with open(self.file(), 'a', newline='') as csv_file:
                 self._write_map_as_csv(csv_file, request_map)
                 users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
                 self._write_list_as_csv(csv_file, users_repos_data)
