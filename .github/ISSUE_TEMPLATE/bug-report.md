@@ -20,7 +20,7 @@ assignees: ''
 
 ### ./ght version
 
-<!-- Please paste the output of './st.py --version' in the code block below -->
+<!-- Please paste the output of './ght.py --version' in the code block below -->
 
 ```
 ./ght --version
