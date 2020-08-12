@@ -89,9 +89,9 @@ class BasicWorkflow:
         finally:
             os.remove(tmp_filepath)
 
-    def _test_stats_reviews_issues(self):
+    def _test_stats_prs_issues(self):
         tmp_file, tmp_filepath = tempfile.mkstemp()
-        cmd_line = "stats july knative --reviews --issues --o {output} --file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(output=self.output, tmp_file=tmp_filepath)
+        cmd_line = "stats july knative --prs --issues --o {output} --file={tmp_file} --users=octocat --repos=client,client-contrib".format(output=self.output, tmp_file=tmp_filepath)
         cmd_line_args = cmd_line.split(" ")
         try:
             ght = GHT(cmd_line_args)
@@ -102,7 +102,7 @@ class BasicWorkflow:
             os.remove(tmp_filepath)
 
     def test_stats(self):
-        self._test_stats_reviews_issues()
+        self._test_stats_prs_issues()
         self._test_stats_commits_prs()
 
     def test_commits(self):
@@ -119,7 +119,7 @@ class BasicWorkflow:
 
     def test_reviews(self):
         tmp_file, tmp_filepath = tempfile.mkstemp()
-        cmd_line = "reviews january knative -o {output} --file={tmp_file} --users=maximilien,octocat --repos=client,client-contrib".format(output=self.output, tmp_file=tmp_filepath)
+        cmd_line = "reviews january knative -o {output} --file={tmp_file} --users=maximilien --repos=client-contrib".format(output=self.output, tmp_file=tmp_filepath)
         cmd_line_args = cmd_line.split(" ")
         try:
             ght = GHT(cmd_line_args)
