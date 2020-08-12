@@ -51,38 +51,45 @@ class TestGHClient(unittest.TestCase):
                 self.submitted_at = self.created_at
 
         class FakePullRequest(Fake):
-            def __init__(self, no):
+            def __init__(self, no, reviews=[]):
                 Fake.__init__(self, no)
+                self.reviews = reviews
 
             def get_reviews(self):
-                return [FakeReview(0), FakeReview(1), FakeReview(2)]
+                return self.reviews
 
         class FakeIssue(Fake):
             def __init__(self, no):
                 Fake.__init__(self, no)
 
+        class FakeWeek:
+            def __init__(self, commit_count):
+                self.w = datetime.now()
+                self.c = commit_count
+
         class FakeStatContributor(Fake):
-            def __init__(self, no):
+            def __init__(self, no, weeks):
                 Fake.__init__(self, no)
                 self.author = self.user
-                class FakeWeek:
-                    def __init__(self):
-                        self.w = datetime.now()
-                        self.c = 1
-                self.weeks = [FakeWeek(), FakeWeek(), FakeWeek()]
+                self.weeks = weeks
 
         class FakeRepo:
             def __init__(self, name):
                 self.name = name
 
             def get_pulls(self, state='close'):
-                return [FakePullRequest(0), FakePullRequest(1), FakePullRequest(2)]
+                fake_reviews0 = [FakeReview(0), FakeReview(0), FakeReview(0)]
+                fake_reviews1 = [FakeReview(1), FakeReview(1)]
+                fake_reviews2 = [FakeReview(2)]
+                return [FakePullRequest(0, fake_reviews0), FakePullRequest(1, fake_reviews1), FakePullRequest(1), FakePullRequest(2), FakePullRequest(2, fake_reviews2), FakePullRequest(2)]
 
             def get_issues(self, since=datetime.now(), state='close'):
-                return [FakeIssue(0), FakeIssue(1), FakeIssue(2)]
+                return [FakeIssue(0), FakeIssue(1), FakeIssue(1), FakeIssue(2), FakeIssue(2), FakeIssue(2)]
 
             def get_stats_contributors(self):
-                return [FakeStatContributor(0), FakeStatContributor(1), FakeStatContributor(2)]
+                fake_weeks0 = [FakeWeek(1), FakeWeek(1), FakeWeek(1)]
+                fake_weeks1 = [FakeWeek(1)]
+                return [FakeStatContributor(0, fake_weeks0), FakeStatContributor(1, fake_weeks1), FakeStatContributor(2, [])]
 
         org.get_repos.return_value = [FakeRepo('fake-repo0'), FakeRepo('fake-repo1'), FakeRepo('fake-repo2')]
         client.get_organization.return_value = org
@@ -101,20 +108,48 @@ class TestGHClient(unittest.TestCase):
         reviews_count = self.client.reviews_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
         self.assertTrue(reviews_count == 3)
 
+    def test_reviews_counts(self):
+        fake_repo = self.client.repos('fake-org')[0]
+        reviews_counts = self.client.reviews_counts(fake_repo, ['user0', 'user1', 'user2'], self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(reviews_counts['user0'] == 3)
+        self.assertTrue(reviews_counts['user1'] == 2)
+        self.assertTrue(reviews_counts['user2'] == 1)
+
     def test_prs_count(self):
         fake_repo = self.client.repos('fake-org')[0]
         prs_count = self.client.prs_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
         self.assertTrue(prs_count == 1)
+
+    def test_prs_counts(self):
+        fake_repo = self.client.repos('fake-org')[0]
+        prs_counts = self.client.prs_counts(fake_repo, ['user0', 'user1', 'user2'], self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(prs_counts['user0'] == 1)
+        self.assertTrue(prs_counts['user1'] == 2)
+        self.assertTrue(prs_counts['user2'] == 3)
 
     def test_issues_count(self):
         fake_repo = self.client.repos('fake-org')[0]
         issues_count = self.client.issues_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
         self.assertTrue(issues_count == 1)
 
+    def test_issues_counts(self):
+        fake_repo = self.client.repos('fake-org')[0]
+        issues_counts = self.client.issues_counts(fake_repo, ['user0', 'user1', 'user2'], self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(issues_counts['user0'] == 1)
+        self.assertTrue(issues_counts['user1'] == 2)
+        self.assertTrue(issues_counts['user2'] == 3)
+
     def test_commits_count(self):
         fake_repo = self.client.repos('fake-org')[0]
         commits_count = self.client.commits_count(fake_repo, 'user0', self.start_date, datetime.now()+timedelta(days=1))
         self.assertTrue(commits_count == 3)
+
+    def test_commits_counts(self):
+        fake_repo = self.client.repos('fake-org')[0]
+        commits_counts = self.client.commits_counts(fake_repo, ['user0', 'user1', 'user2'], self.start_date, datetime.now()+timedelta(days=1))
+        self.assertTrue(commits_counts['user0'] == 3)
+        self.assertTrue(commits_counts['user1'] == 1)
+        self.assertTrue(commits_counts['user2'] == 0)
 
 if __name__ == '__main__':
     unittest.main()
