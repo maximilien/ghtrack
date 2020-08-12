@@ -75,10 +75,10 @@ class TestGHClient(unittest.TestCase):
             def __init__(self, name):
                 self.name = name
 
-            def get_pulls(self, state='closed'):
+            def get_pulls(self, state='close'):
                 return [FakePullRequest(0), FakePullRequest(1), FakePullRequest(2)]
 
-            def get_issues(self, since=datetime.now(), state='closed'):
+            def get_issues(self, since=datetime.now(), state='close'):
                 return [FakeIssue(0), FakeIssue(1), FakeIssue(2)]
 
             def get_stats_contributors(self):

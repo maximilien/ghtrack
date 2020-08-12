@@ -20,51 +20,7 @@ from tabulate import tabulate
 
 from client import GHClient
 
-VERBOSE=False
-
-class Colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-class Console:
-    def verbose(msg):
-        if VERBOSE:
-            print(f"{Colors.OKBLUE}{msg}{Colors.ENDC}".format(msg=str(msg)))
-
-    def print(msg=''):
-        print(msg)
-
-    def println(no=1):
-        for i in range(no):
-            print()
-
-    def ok(msg):
-        print(f"{Colors.OKGREEN}{msg}{Colors.ENDC}".format(msg=str(msg)))
-
-    def error(msg):
-        Console.fail(msg)
-
-    def fail(msg):
-        print(f"{Colors.FAIL}Error: {msg}{Colors.ENDC}".format(msg=str(msg)))
-
-    def warn(msg):
-        print(f"{Colors.WARNING}Warning: {msg}{Colors.ENDC}".format(msg=str(msg)))
-
-    def progress(count, total, status=''):
-        bar_len = 60
-        filled_len = int(round(bar_len * count / float(total)))
-
-        percents = round(100.0 * count / float(total), 1)
-        bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
-        sys.stdout.flush()
+from common import *
 
 def parse_credentials_map(file_name):
     credentials_map = {'gh_access_token': ''}
@@ -235,11 +191,12 @@ class Command:
 
     def _update_users_issues(self):
         repos = self.client.repos(self.org())
+        totalReposCount = repos.totalCount
         for user in self.users():
             Console.print("Getting 'issues' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            count, total = 1, repos.totalCount
+            count = 1
             for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                Console.progress(count, totalReposCount, status="processing repos".format(name=repo.name))
                 if repo.name in self.repos() and repo.name not in self.skip_repos():
                     issues_count = self.client.issues_count(repo, user, self.start_date(), self.end_date(), self.state())
                     if issues_count == 0 and not self.show_all_stats():
@@ -251,10 +208,11 @@ class Command:
     def _update_users_prs(self):
         repos = self.client.repos(self.org())
         for user in self.users():
+            totalReposCount = repos.totalCount
             Console.print("Getting 'prs' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            count, total = 1, repos.totalCount
+            count = 1
             for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                Console.progress(count, totalReposCount, status="processing repos".format(name=repo.name))
                 if repo.name in self.repos() and repo.name not in self.skip_repos():
                     prs_count = self.client.prs_count(repo, user, self.start_date(), self.end_date(), self.state())
                     if prs_count == 0 and not self.show_all_stats():
@@ -265,11 +223,12 @@ class Command:
 
     def _update_users_reviews(self):
         repos = self.client.repos(self.org())
+        totalReposCount = repos.totalCount
         for user in self.users():
             Console.print("Getting 'reviews' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            count, total = 1, repos.totalCount
+            count = 1
             for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                Console.progress(count, totalReposCount, status="processing repos".format(name=repo.name))
                 if repo.name in self.repos() and repo.name not in self.skip_repos():
                     reviews_count = self.client.reviews_count(repo, user, self.start_date(), self.end_date())
                     if reviews_count == 0 and not self.show_all_stats():
@@ -280,11 +239,12 @@ class Command:
 
     def _update_users_commits(self):
         repos = self.client.repos(self.org())
+        totalReposCount = repos.totalCount
         for user in self.users():
             Console.print("Getting 'commits' for '{user}' in organization: '{org}'".format(user=user, org=self.org()))
-            count, total = 1, repos.totalCount
+            count = 1
             for repo in repos:
-                Console.progress(count, total, status="processing repos".format(name=repo.name))
+                Console.progress(count, totalReposCount, status="processing repos".format(name=repo.name))
                 if repo.name in self.repos() and repo.name not in self.skip_repos():
                     commits_count = self.client.commits_count(repo, user, self.start_date(), self.end_date())
                     if commits_count == 0 and not self.show_all_stats():

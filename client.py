@@ -14,6 +14,8 @@
 
 from github import Github
 
+from common import *
+
 class GHClient:
     def __init__(self, access_token, client=None):
         self.client = client
@@ -36,14 +38,17 @@ class GHClient:
         ghorg = self.get_client().get_organization(org)
         return ghorg.get_repos()
 
-    def reviews_count(self, repo, author_login, start_date, end_date):
-        prs = repo.get_pulls()
+    def reviews_count(self, repo, author_login, start_date, end_date, pr_state='close'):
+        prs = repo.get_pulls(state=pr_state)
         reviews_count = 0
         for pr in prs:
             reviews = pr.get_reviews()
             for r in reviews:
-                if r.user.login == author_login and (r.submitted_at >= start_date and r.submitted_at <= end_date):
-                    reviews_count += 1
+                try:
+                    if r.user.login == author_login and (r.submitted_at >= start_date and r.submitted_at <= end_date):
+                        reviews_count += 1
+                except Exception as e:
+                    Console.warn("problem reading review: {r_id} from pr: {pr_id}, message: {message}".format(r_id=r.id, pr_id=pr.id, message=e.__str__()))
         return reviews_count
 
     def prs_count(self, repo, author_login, start_date, end_date, state='close'):
