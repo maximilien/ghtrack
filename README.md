@@ -6,11 +6,11 @@ Automate getting tracking commits, prs, reviews, and issues for group of GitHub 
 
 There are two things you need to get started with the ghtrack CLI. From now on called CLI or `ght`.
 
-First, you need to get a developer or admin account for your `GitHub` ID. [Register](https://developer.github.com/program/), it's free. When you do, you can then create an access token to access and use the GitHub APIs v3 or later.
+First, you need to get a developer, or admin account, for your `GitHub` ID. [Register](https://developer.github.com/program/), it's free. When you do, you can then create an access token in order to use the GitHub APIs v3 (or later).
 
-Second, you need to setup your [environment](#Environment). See that section for details. However, note also that you can either setup your local machine with Python3 and the dependencies, or, alternatively, use the [`Dockerfile`](Dockerfile) to create a container with the latest version and all the dependencies setup for you. 
+Second, you need to setup your [environment](#Environment). See that section for details. However, note also that you can either setup your local machine with Python3 and the dependencies, or, alternatively, use the included [`Dockerfile`](Dockerfile) to create a container with the latest version and all the dependencies setup for you. 
 
-You can also use one of my published images or the latest one here: `docker.io/drmax/ghtrack:latest`. And then run the image locally and start an interactive BASH session with:
+You can also use one of my published images, or best, the latest one here: `docker.io/drmax/ghtrack:latest`. And then run the image locally and start an interactive BASH session with:
 
 ```bash
 docker run -it docker.io/drmax/ghtrack:latest /bin/bash
@@ -24,7 +24,7 @@ You will need to use this access token while invoking the CLI. You can either pa
 
 1. Pass it locally using the `--access-token <GitHub access token here>`, without the '<>'
 
-2. For environment variable, just set it as follows:
+2. When using an environment variable, just set it as follows:
 
 ```bash
 export GH_ACCESS_TOKEN=<GitHub access token here>
@@ -36,7 +36,6 @@ Create your `./.ghtrack.yml` file with a command as follows or with your favorit
 
 ```bash
 cat > .ghtrack.yml <<EOF
-# GitHub
 gh_access_token: <GitHub access token here>
 EOF
 ```
