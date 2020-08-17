@@ -31,6 +31,7 @@ class TestCLI(TestCase):
                          '--help': False,
                          '--verbose': False,
                          '--version': False,
+                         '--summarize': False,
                          '--show-all-stats': False,
                          '--state': 'closed',
                          '--output': 'text',
@@ -84,6 +85,7 @@ class CommandTestCase:
                          '--help': False,
                          '--verbose': False,
                          '--version': False,
+                         '--summarize': False,
                          '--show-all-stats': False,
                          '--state': 'closed',
                          '--output': 'text',
@@ -155,6 +157,7 @@ class CommandTestCase:
                  '--help': False,
                  '--verbose': False,
                  '--version': False,
+                 '--summarize': False,
                  '--show-all-stats': False,
                  '--commits': False,
                  '--prs': False,
@@ -363,6 +366,17 @@ class CommandTestCase:
         cli = CLI(test_args)
         self.assertEqual(cli.command().show_all_stats(), False)
 
+    def test_summarize(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--summarize'] = False
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().summarize(), False)
+
+        test_args = self.TEST_ARGS.copy()
+        test_args['--summarize'] = True
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().summarize(), True)
+
     def test_cmd_line(self):
         for cmd in ["commits", "reviews", "issues"]:
             expected_cmd_line = "{cmd} january fake-org --users=fake-user1,fake-user2 --repos=fake-repo1,fake-repo2 --skip-repos=fake-repo3".format(cmd=cmd)
@@ -437,6 +451,13 @@ class TestReviews(CommandTestCase, TestCase):
         rc = cli.command(client).execute()
         self.assertEqual(rc, 0)
 
+    def test_reviews(self):
+        self.arguments['--summarize'] = True
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_reviews()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
 class TestPRs(CommandTestCase, TestCase):
     def setUp(self):
         super().setUp()
@@ -463,6 +484,13 @@ class TestPRs(CommandTestCase, TestCase):
         rc = cli.command(client).execute()
         self.assertEqual(rc, 0)
 
+    def test_prs_summarize(self):
+        self.arguments['--summarize'] = True
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_prs()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
 class TestIssues(CommandTestCase, TestCase):
     def setUp(self):
         super().setUp()
@@ -484,6 +512,13 @@ class TestIssues(CommandTestCase, TestCase):
         self.assertEqual(rc, 0)
 
     def test_issues(self):
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_issues()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+    def test_issues_summarize(self):
+        self.arguments['--summarize'] = True
         cli = CLI(self.arguments)
         client = self.__create_mock_client_issues()
         rc = cli.command(client).execute()
@@ -517,6 +552,13 @@ class TestStats(CommandTestCase, TestCase):
         self.assertEqual(rc, 0)
 
     def test_stats(self):
+        cli = CLI(self.arguments)
+        client = self.__create_mock_client_stats()
+        rc = cli.command(client).execute()
+        self.assertEqual(rc, 0)
+
+    def test_stats_summarize(self):
+        self.arguments['--summarize'] = True
         cli = CLI(self.arguments)
         client = self.__create_mock_client_stats()
         rc = cli.command(client).execute()

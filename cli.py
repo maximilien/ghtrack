@@ -83,19 +83,28 @@ class CLI:
             raise Exception("Invalid command")
 
 class Command:
+    BOOL_OPTIONS = ['--summarize']
     LIST_OPTIONS = ['--users', '--repos', '--skip-repos']
     MONTHS_CAP = {'January':1, 'February':2, 'March':3, 'April':4, 'May':5, 'June':6, 'July':7, 'August':8, 'September':9, 'October':10, 'November':11, 'December':12}
     MONTHS_LOWER = {'january':1, 'february':2, 'march':3, 'april':4, 'may':5, 'june':6, 'july':7, 'august':8, 'september':9, 'october':10, 'november':11, 'december':12}
     MONTHS_UPPER = {'JANUARY':1, 'FEBRUARY':2, 'MARCH':3, 'APRIL':4, 'MAY':5, 'JUNE':6, 'JULY':7, 'AUGUST':7, 'SEPTEMBER':9, 'OCTOBER':10, 'NOVEMBER':11, 'DECEMBER':12}
     MONTHS_ABREV = {'jan':1, 'feb':2, 'mar':3, 'apr':4, 'may':5, 'jun':6, 'jul':7, 'aug':8, 'sep':9, 'oct':10, 'nov':11, 'dec':12}
+    OUTPUT_JSON = ['json', 'jsn', 'JSON', 'JSN']
+    OUTPUT_YAML = ['yaml', 'yml', 'YAML', 'YML']
+    OUTPUT_CSV = ['csv', 'CSV']
     def __init__(self, args, credentials, client):
         self.__init_empty_options(args)
         self.args = args
         self.credentials = credentials
         self.client = client
+        self.repos_stats = self._init_repos_stats()
+        self.summary_stats = self._init_summary_stats()
         self.__month_number = 0
 
     def __init_empty_options(self, args):
+        for option in self.BOOL_OPTIONS:
+            if args[option] == None:
+                args[option] = False
         for option in self.LIST_OPTIONS:
             if args[option] == None or args[option] == '':
                 args[option] = []
@@ -119,6 +128,26 @@ class Command:
             for repo in self.repos():
                 if repo not in self.skip_repos():
                     users_stats[user][repo] = 0
+
+    def _init_repos_stats(self):
+        repo_stats = {} #{'repo_name': {'commits': 0, 'prs': 0, 'reviews': 0, 'issues': 0},  ...}
+        for repo in self.repos():
+            if repo not in self.skip_repos():
+                repo_stats[repo] = {}
+                repo_stats[repo]['commits'] = 0
+                repo_stats[repo]['prs'] = 0
+                repo_stats[repo]['reviews'] = 0
+                repo_stats[repo]['issues'] = 0
+        return repo_stats
+
+    def _init_summary_stats(self):
+        data = ['commits', 'prs', 'issues', 'reviews']
+        summary_stats = {} #{'commits': {'repo0': 0, 'repo1': 0, ...},{'reviews': {'repo0': 0, ...},...}
+        for repo in self.repos():
+            if repo not in self.skip_repos():
+                for item in data:
+                    summary_stats[item] = {repo: 0}
+        return summary_stats
 
     def _write_map_as_csv(self, output_stream, output_map):
         writer = csv.DictWriter(output_stream, output_map.keys())
@@ -145,11 +174,43 @@ class Command:
                         users_repos_data.append([user, repo, request_data, users_repos_data_count])
         return users_repos_data
 
-    def _print_output_text(self, output_map):
+    def _print_summarize_output(self):
+        if self.output() in self.OUTPUT_JSON:
+            self._print_output_json(self.repos_stats)
+            self._print_output_json(self.summary_stats)
+        elif self.output() in self.OUTPUT_YAML:
+            self._print_output_yml(self.repos_stats)
+            self._print_output_yml(self.summary_stats)
+        elif self.output() in self.OUTPUT_CSV:
+            self._print_summarize_output_cvs()
+        else:
+            self._print_summarize_output_text()
+        Console.println()
+
+    def _print_summarize_output_text(self):
+        Console.println()
+        # repos_stats_headers = ['repo', 'data', 'total']
+        # s = {}
+        # print(tabulate([[s['repo'], s['data'], s['total']]], headers=repos_stats_headers))
+
+        # Console.println()
+        # summary_stats_headers = ['data', 'repo', 'total']
+        # s = {}
+        # print(tabulate([[s['data'], s['repo'], s['total']]], headers=summary_stats_headers))
+        print("TODO print output as Text table")
+
+    def _print_summarize_output_cvs(self):
+        Console.println()
+        repos_stats_headers = ['repo', 'data', 'total']
+        summary_stats_headers = ['data', 'repo', 'total']
+        print("TODO print output as CSV")
+
+    def _print_output_text(self, output_map):        
         Console.println()
         request_headers = ['org', 'year', 'month', 'data', 'state']
         r = output_map['request']
         print(tabulate([[r['org'], r['year'], r['month'], r['data'], r['state']]], headers=request_headers))
+        
         Console.println()
         users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
         print(tabulate(users_repos_data[1:], headers=users_repos_data[0]))
@@ -189,6 +250,27 @@ class Command:
                 users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
                 self._write_list_as_csv(csv_file, users_repos_data)
 
+    # data is one of 'commits', 'prs', 'reviews', 'issues'
+    # data_map is map {'user0': {'repo0': count0, 'repo1': count1, ...}, {...}}
+    # output: {'repo0': {'commits': total0, 'issues': total1, ...}, {...}}
+    def _update_repo_stats(self, data, data_map):
+        for user in self.users():
+            user_data_map = data_map[user]
+            for repo_name in user_data_map:
+                self.repos_stats[repo_name][data] += user_data_map[repo_name]
+
+    # data is one of 'commits', 'prs', 'reviews', 'issues'
+    # data_map is map {'user0': {'repo0': count0, 'repo1': count1, ...}, {...}}
+    # output: {'commits': {'repo0': total0, 'repo1': total1, ...}, {...}}
+    def _update_summary_stats(self, data, data_map):
+        for user in self.users():
+            user_data_map = data_map[user]
+            for repo_name in user_data_map:
+                if repo_name in self.summary_stats[data]:
+                    self.summary_stats[data][repo_name] += user_data_map[repo_name]
+                else:
+                    self.summary_stats[data][repo_name] = user_data_map[repo_name]
+
     def _update_users_issues(self):
         repos = self.client.repos(self.org())
         totalReposCount = repos.totalCount
@@ -204,6 +286,8 @@ class Command:
                     self.users_issues[user][repo.name] = issues_count
                 count += 1
             Console.println()
+        self._update_repo_stats('issues', self.users_issues)
+        self._update_summary_stats('issues', self.users_issues)
 
     def _update_users_prs(self):
         repos = self.client.repos(self.org())
@@ -220,6 +304,8 @@ class Command:
                     self.users_prs[user][repo.name] = prs_count
                 count += 1
             Console.println()
+        self._update_repo_stats('prs', self.users_prs)
+        self._update_summary_stats('prs', self.users_prs)
 
     def _update_users_reviews(self):
         repos = self.client.repos(self.org())
@@ -236,6 +322,8 @@ class Command:
                     self.users_reviews[user][repo.name] = reviews_count
                 count += 1
             Console.println()
+        self._update_repo_stats('reviews', self.users_reviews)
+        self._update_summary_stats('reviews', self.users_reviews)
 
     def _update_users_commits(self):
         repos = self.client.repos(self.org())
@@ -252,6 +340,8 @@ class Command:
                     self.users_commits[user][repo.name] = commits_count
                 count += 1
             Console.println()
+        self._update_repo_stats('commits', self.users_commits)
+        self._update_summary_stats('commits', self.users_commits)
 
     def check_month(self, month):
         if month in self.MONTHS_LOWER.keys():
@@ -376,6 +466,9 @@ class Command:
     def show_all_stats(self):
         return self.args['--show-all-stats']
 
+    def summarize(self):
+        return self.args['--summarize']
+
     def cmd_line(self):
         repos_line = "--all-repos"
         if self.args['--all-repos'] == False:
@@ -402,14 +495,16 @@ class Command:
         self.args['--repos'] = repo_names
 
     def print_output(self, output_map):
-        if self.output() == 'json' or self.output() == 'JSON':
+        if self.output() in self.OUTPUT_JSON:
             self._print_output_json(output_map)
-        elif self.output() == 'yml' or self.output() == 'yaml' or self.output() == 'YML' or self.output() == 'YAML':
+        elif self.output() in self.OUTPUT_YAML:
             self._print_output_yml(output_map)
-        elif self.output() == 'csv' or self.output() == 'CSV':
+        elif self.output() in self.OUTPUT_CSV:
             self._print_output_csv(output_map)
         else:
             self._print_output_text(output_map)
+        if self.summarize() and self.name() != 'stats':
+            self._print_summarize_output()
 
     def execute(self):
         self.fetch_repos()
@@ -546,6 +641,8 @@ class Stats(Command):
             self.print_output(self.users_reviews)
         if self.stats_issues():
             self.print_output(self.users_issues)
+        if self.summarize():
+            self._print_summarize_output()
 
     def name(self):
       return "stats"
