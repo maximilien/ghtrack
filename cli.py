@@ -188,16 +188,28 @@ class Command:
         Console.println()
 
     def _print_summarize_output_text(self):
-        Console.println()
-        # repos_stats_headers = ['repo', 'data', 'total']
-        # s = {}
-        # print(tabulate([[s['repo'], s['data'], s['total']]], headers=repos_stats_headers))
+        Console.println(2)
+        repos_stats_headers = ['repo', 'data', 'total']
+        table = []
+        for repo in self.repos():
+            if repo not in self.skip_repos():
+                repo_stats = self.repos_stats[repo]
+                for item in repo_stats:
+                    row = [repo, item, repo_stats[item]]
+                    table.append(row)
+        print(tabulate(table, headers=repos_stats_headers))
 
-        # Console.println()
-        # summary_stats_headers = ['data', 'repo', 'total']
-        # s = {}
-        # print(tabulate([[s['data'], s['repo'], s['total']]], headers=summary_stats_headers))
-        print("TODO print output as Text table")
+        Console.println()
+        summary_stats_headers = ['data', 'repo', 'total']
+        table = []
+        for data in self.summary_stats.keys():
+            data_stats = self.summary_stats[data]
+            for repo in self.repos():
+                if repo not in self.skip_repos():
+                    for item in data_stats:
+                        row = [data, repo, data_stats[item]]
+                        table.append(row)
+        print(tabulate(table, headers=summary_stats_headers))
 
     def _print_summarize_output_cvs(self):
         Console.println()
