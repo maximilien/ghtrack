@@ -174,6 +174,29 @@ class Command:
                         users_repos_data.append([user, repo, request_data, users_repos_data_count])
         return users_repos_data
 
+    def _extract_repos_stats_table(self):
+        header = ['repo', 'data', 'total']
+        table = []
+        for repo in self.repos():
+            if repo not in self.skip_repos():
+                repo_stats = self.repos_stats[repo]
+                for item in repo_stats:
+                    row = [repo, item, repo_stats[item]]
+                    table.append(row)
+        return (header, table)
+
+    def _extract_summary_stats_table(self):
+        header = ['data', 'repo', 'total']
+        table = []
+        for data in self.summary_stats.keys():
+            data_stats = self.summary_stats[data]
+            for repo in self.repos():
+                if repo not in self.skip_repos():
+                    for item in data_stats:
+                        row = [data, repo, data_stats[item]]
+                        table.append(row)
+        return (header, table)
+
     def _print_summarize_output(self):
         if self.output() in self.OUTPUT_JSON:
             self._print_output_json(self.repos_stats)
@@ -189,33 +212,20 @@ class Command:
 
     def _print_summarize_output_text(self):
         Console.println(2)
-        repos_stats_headers = ['repo', 'data', 'total']
-        table = []
-        for repo in self.repos():
-            if repo not in self.skip_repos():
-                repo_stats = self.repos_stats[repo]
-                for item in repo_stats:
-                    row = [repo, item, repo_stats[item]]
-                    table.append(row)
-        print(tabulate(table, headers=repos_stats_headers))
-
+        header, table = self._extract_repos_stats_table()
+        print(tabulate(table, headers=header))
         Console.println()
-        summary_stats_headers = ['data', 'repo', 'total']
-        table = []
-        for data in self.summary_stats.keys():
-            data_stats = self.summary_stats[data]
-            for repo in self.repos():
-                if repo not in self.skip_repos():
-                    for item in data_stats:
-                        row = [data, repo, data_stats[item]]
-                        table.append(row)
-        print(tabulate(table, headers=summary_stats_headers))
+        header, table = self._extract_summary_stats_table()
+        print(tabulate(table, headers=header))
 
     def _print_summarize_output_cvs(self):
         Console.println()
         repos_stats_headers = ['repo', 'data', 'total']
-        summary_stats_headers = ['data', 'repo', 'total']
-        print("TODO print output as CSV")
+        with open(self.file(), 'a', newline='') as csv_file:
+            header, repos_stats_table = self._extract_repos_stats_table()
+            self._write_list_as_csv(csv_file, [header, *repos_stats_table])
+            header, summary_stats_table = self._extract_summary_stats_table()
+            self._write_list_as_csv(csv_file, [header, *summary_stats_table])
 
     def _print_output_text(self, output_map):        
         Console.println()
@@ -236,7 +246,6 @@ class Command:
         else:
             with open(self.file(), 'a') as f:
                 f.write(text_output)
-            Console.print("wrote output file: {file}".format(file=self.file()))
 
     def _print_output_yml(self, output_map):
         Console.println()
@@ -245,7 +254,6 @@ class Command:
         else:
             with open(self.file(), 'a') as f:
                 yaml.dump(output_map, f, default_flow_style=False)
-            Console.print("wrote output file: {file}".format(file=self.file()))
 
     def _print_output_csv(self, output_map):
         request_map = output_map['request']
@@ -493,6 +501,9 @@ class Command:
         Console.verbose("# GH Track output for cmd line: {cmd_line}".format(cmd_line=self.cmd_line()))
 
     def end_comment(self):
+        if self.file() != None:
+            Console.print("wrote output file: {file}".format(file=self.file()))
+
         if not self.show_all_stats():
             Console.print("Showing only non-zero stats, use --show-all-stats to view all")
         Console.ok("OK")
