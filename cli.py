@@ -222,8 +222,10 @@ class Command:
         Console.println()
         repos_stats_headers = ['repo', 'data', 'total']
         with open(self.file(), 'a', newline='') as csv_file:
+            csv_file.write('\n')
             header, repos_stats_table = self._extract_repos_stats_table()
             self._write_list_as_csv(csv_file, [header, *repos_stats_table])
+            csv_file.write('\n')
             header, summary_stats_table = self._extract_summary_stats_table()
             self._write_list_as_csv(csv_file, [header, *summary_stats_table])
 
@@ -244,16 +246,18 @@ class Command:
         if self.file() == None or self.file() == '':
             Console.print(text_output)
         else:
-            with open(self.file(), 'a') as f:
-                f.write(text_output)
+            with open(self.file(), 'a') as json_file:
+                json_file.write('\n')
+                json_file.write(text_output)
 
     def _print_output_yml(self, output_map):
         Console.println()
         if self.file() == None or self.file() == '':
             Console.print(yaml.dump(output_map))
         else:
-            with open(self.file(), 'a') as f:
-                yaml.dump(output_map, f, default_flow_style=False)
+            with open(self.file(), 'a') as yml_file:
+                yml_file.write('\n')
+                yaml.dump(output_map, yml_file, default_flow_style=False)
 
     def _print_output_csv(self, output_map):
         request_map = output_map['request']
@@ -266,7 +270,9 @@ class Command:
             Console.print(output_stream.getvalue())
         else:
             with open(self.file(), 'a', newline='') as csv_file:
+                csv_file.write('\n')
                 self._write_map_as_csv(csv_file, request_map)
+                csv_file.write('\n')
                 users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
                 self._write_list_as_csv(csv_file, users_repos_data)
 
