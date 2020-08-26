@@ -160,7 +160,7 @@ class Command:
         if not self.check_rl_max():
             Console.print("Using default rate limit API calls of '{default}'".format(default=RateLimitData.DEFAULT_RATE_LIMIT_MAX))
         else:
-            rate_limit_data.max_calls = self.rl_max()
+            rate_limit_data.max_calls = int(self.rl_max())
 
         if not self.check_rl_sleep():
             Console.print("Using default rate limit sleep of '{default}'".format(default=RateLimitData.DEFAULT_RATE_LIMIT_SLEEP))
@@ -454,7 +454,7 @@ class Command:
     def check_rl_max(self):
         if '--rl-max' not in self.args:
             return False
-        if self.rl_max() < 0:
+        if int(self.rl_max()) < 0:
             Console.warn("Invalid --rl-max value '{rl_max}'".format(rl_max=self.rl_max()))
             return False
         return True
