@@ -42,7 +42,7 @@ class GHClient:
             return
         self.api_calls += 1
         if self.api_calls >= self.rate_limit_data.max_calls:
-            Console.warn("Rate limit API calls reach '{max_calls}' and sleeping for '{sleep}'".format(max_calls=self.rate_limit_data.max_calls, sleep=self.rate_limit_data.sleep))
+            Console.warn("Rate limit API calls reach '{max_calls}' and sleeping for '{sleep}' seconds".format(max_calls=self.rate_limit_data.max_calls, sleep=self.rate_limit_data.sleep))
             os.sleep(self.rate_limit_data.sleep)
             self.api_calls = 0
 
