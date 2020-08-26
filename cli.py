@@ -92,6 +92,7 @@ class Command:
     OUTPUT_JSON = ['json', 'jsn', 'JSON', 'JSN']
     OUTPUT_YAML = ['yaml', 'yml', 'YAML', 'YML']
     OUTPUT_CSV = ['csv', 'CSV']
+    SECONDS_MULIPLIER = {'s':1, 'm':60, 'h':3600, 'd':24*3600}
     def __init__(self, args, credentials, client):
         self.__init_empty_options(args)
         self.args = args
@@ -99,6 +100,8 @@ class Command:
         self.client = client
         self.repos_stats = self._init_repos_stats()
         self.summary_stats = self._init_summary_stats()
+        self.rate_limit_data = self._init_rate_limit_data()
+        self.client.set_rate_limit_data(self.rate_limit_data)
         self.__month_number = 0
 
     def __init_empty_options(self, args):
@@ -148,6 +151,35 @@ class Command:
                 for item in data:
                     summary_stats[item] = {repo: 0}
         return summary_stats
+
+    def _init_rate_limit_data(self):
+        if not self.rate_limit():
+            return RateLimitData(0, 0, False)
+
+        rate_limit_data = RateLimitData(RateLimitData.DEFAULT_RATE_LIMIT_MAX, RateLimitData.DEFAULT_RATE_LIMIT_SLEEP, True)
+        if not self.check_rl_max():
+            Console.print("Using default rate limit API calls of '{default}'".format(default=RateLimitData.DEFAULT_RATE_LIMIT_MAX))
+        else:
+            rate_limit_data.max_calls = self.rl_max()
+
+        if not self.check_rl_sleep():
+            Console.print("Using default rate limit sleep of '{default}'".format(default=RateLimitData.DEFAULT_RATE_LIMIT_SLEEP))
+        else:
+            rate_limit_data.sleep = self._parse_rl_sleep()
+
+        return rate_limit_data
+
+    # returns --rl-sleep value in seconds, so 1h == 3600
+    def _parse_rl_sleep(self):
+        sleep_seconds = 0
+        rl_sleep = self.rl_sleep()
+        try:
+            unit = rl_sleep[len(rl_sleep)-1:]
+            value = int(rl_sleep[0:len(rl_sleep)-1])
+            sleep_seconds = self.SECONDS_MULIPLIER[unit.lower()]*value
+        except:
+            Console.warn("Error parsing --rl-sleep value '{rl_sleep}".format(rl_sleep=self.rl_sleep()))
+        return sleep_seconds
 
     def _write_map_as_csv(self, output_stream, output_map):
         writer = csv.DictWriter(output_stream, output_map.keys())
@@ -419,6 +451,27 @@ class Command:
             return False
         return True
 
+    def check_rl_max(self):
+        if '--rl-max' not in self.args:
+            return False
+        if self.rl_max() < 0:
+            Console.warn("Invalid --rl-max value '{rl_max}'".format(rl_max=self.rl_max()))
+            return False
+        return True
+
+    def check_rl_sleep(self):
+        if '--rl-sleep' not in self.args:
+            return False
+        if self.rl_sleep().__class__ != ''.__class__:
+            return False
+        if self.rl_sleep() == '':
+            return False
+        sleep_seconds = self._parse_rl_sleep()
+        if sleep_seconds <= 0:
+            Console.warn("Invalid --rl-sleep value '{rl_sleep}'".format(rl_sleep=self.rl_sleep()))
+            return False
+        return True
+
     def println(self, msg):
         self.print(msg + "\n")
 
@@ -494,6 +547,15 @@ class Command:
 
     def summarize(self):
         return self.args['--summarize']
+
+    def rate_limit(self):
+        return self.args['--rate-limit']
+
+    def rl_max(self):
+        return self.args['--rl-max']
+
+    def rl_sleep(self):
+        return self.args['--rl-sleep']
 
     def cmd_line(self):
         repos_line = "--all-repos"

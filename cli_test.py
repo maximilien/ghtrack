@@ -33,6 +33,7 @@ class TestCLI(TestCase):
                          '--version': False,
                          '--summarize': False,
                          '--show-all-stats': False,
+                         '--rate-limit': False,
                          '--state': 'closed',
                          '--output': 'text',
                          '--file': '',
@@ -87,6 +88,7 @@ class CommandTestCase:
                          '--version': False,
                          '--summarize': False,
                          '--show-all-stats': False,
+                         '--rate-limit': False,
                          '--state': 'closed',
                          '--output': 'text',
                          '--file': '',
@@ -159,6 +161,7 @@ class CommandTestCase:
                  '--version': False,
                  '--summarize': False,
                  '--show-all-stats': False,
+                 '--rate-limit': False,
                  '--commits': False,
                  '--prs': False,
                  '--reviews': False,
@@ -173,6 +176,28 @@ class CommandTestCase:
                  'prs': False,
                  'issues': False,
                  'stats': True}
+
+    def test_name(self):
+        cli = CLI(self.arguments)
+        self.assertEqual(cli.command().name(), self.command_name())
+
+    def test_cmd_line(self):
+        for cmd in ["commits", "reviews", "issues"]:
+            expected_cmd_line = "{cmd} january fake-org --users=fake-user1,fake-user2 --repos=fake-repo1,fake-repo2 --skip-repos=fake-repo3".format(cmd=cmd)
+            test_args = self.TEST_ARGS.copy()
+            test_args['stats'] = False
+            if cmd == "commits":
+                test_args['commits'] = True
+            elif cmd == "reviews":
+                test_args['reviews'] = True
+            elif cmd == "prs":
+                test_args['prs'] = True
+            elif cmd == 'issues':
+                test_args['issues'] = True
+            else:
+                test_args['stats'] = True
+            cli = CLI(test_args)
+            self.assertEqual(cli.command().cmd_line(), expected_cmd_line)
 
     def test_check_month(self):
         cli = CLI(self.TEST_ARGS)
@@ -346,58 +371,163 @@ class CommandTestCase:
 
     def test_all_repos_False(self):
         cli = CLI(self.TEST_ARGS.copy())
-        self.assertEqual(cli.command().all_repos(), False)
+        self.assertFalse(cli.command().all_repos())
 
     def test_all_repos_True(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--all-repos'] = True
         cli = CLI(test_args)
-        self.assertEqual(cli.command().all_repos(), True)
+        self.assertTrue(cli.command().all_repos())
 
     def test_show_all_stats_True(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--show-all-stats'] = True
         cli = CLI(test_args)
-        self.assertEqual(cli.command().show_all_stats(), True)
+        self.assertTrue(cli.command().show_all_stats())
 
     def test_show_all_stats_False(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--show-all-stats'] = False
         cli = CLI(test_args)
-        self.assertEqual(cli.command().show_all_stats(), False)
+        self.assertFalse(cli.command().show_all_stats())
 
     def test_summarize(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--summarize'] = False
         cli = CLI(test_args)
-        self.assertEqual(cli.command().summarize(), False)
+        self.assertFalse(cli.command().summarize())
 
         test_args = self.TEST_ARGS.copy()
         test_args['--summarize'] = True
         cli = CLI(test_args)
-        self.assertEqual(cli.command().summarize(), True)
+        self.assertTrue(cli.command().summarize())
 
-    def test_cmd_line(self):
-        for cmd in ["commits", "reviews", "issues"]:
-            expected_cmd_line = "{cmd} january fake-org --users=fake-user1,fake-user2 --repos=fake-repo1,fake-repo2 --skip-repos=fake-repo3".format(cmd=cmd)
-            test_args = self.TEST_ARGS.copy()
-            test_args['stats'] = False
-            if cmd == "commits":
-                test_args['commits'] = True
-            elif cmd == "reviews":
-                test_args['reviews'] = True
-            elif cmd == "prs":
-                test_args['prs'] = True
-            elif cmd == 'issues':
-                test_args['issues'] = True
-            else:
-                test_args['stats'] = True
-            cli = CLI(test_args)
-            self.assertEqual(cli.command().cmd_line(), expected_cmd_line)
+    def test_rate_limit(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = False
+        cli = CLI(test_args)
+        self.assertFalse(cli.command().rate_limit())
 
-    def test_name(self):
-        cli = CLI(self.arguments)
-        self.assertEqual(cli.command().name(), self.command_name())
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().rate_limit())
+
+    def test_rl_max(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-max'] = 1
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().rl_max(), 1)
+
+    def test_rl_sleep(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = '1m'
+        cli = CLI(test_args)
+        self.assertEqual(cli.command().rl_sleep(), '1m')
+
+    def test_check_rl_max(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-max'] = 0
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_rl_max())
+
+        test_args['--rate-limit'] = True
+        test_args['--rl-max'] = 1
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_rl_max())
+
+        test_args['--rate-limit'] = True
+        test_args['--rl-max'] = -1
+        cli = CLI(test_args)
+        self.assertFalse(cli.command().check_rl_max())
+
+    def test_check_rl_sleep(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = ''
+        cli = CLI(test_args)
+        self.assertFalse(cli.command().check_rl_sleep())
+
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = 1
+        cli = CLI(test_args)
+        self.assertFalse(cli.command().check_rl_sleep())
+
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = 'm'
+        cli = CLI(test_args)
+        self.assertFalse(cli.command().check_rl_sleep())
+
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = '1m'
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_rl_sleep())
+        self.assertTrue(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().rate_limit_data.sleep, 60)
+
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = '1h'
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_rl_sleep())
+        self.assertTrue(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().rate_limit_data.sleep, 3600)
+
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = '2d'
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().check_rl_sleep())
+        self.assertTrue(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().rate_limit_data.sleep, 2*24*3600)
+
+    def test_rate_limit_False(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = False
+        cli = CLI(test_args)
+        self.assertFalse(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().rate_limit_data.max_calls, 0)
+        self.assertEqual(cli.command().rate_limit_data.sleep, 0)
+
+    def test_rate_limit_True(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().rate_limit_data.max_calls, 100)
+        self.assertEqual(cli.command().rate_limit_data.sleep, 30*60)
+
+    def test_rate_limit_bad_rl_max(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-max'] = -1
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().rate_limit_data.max_calls, 100)
+
+    def test_rate_limit_bad_rl_sleep(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-sleep'] = ''
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().rate_limit_data.sleep, 30*60)
+
+    def test_rate_limit_True_values(self):
+        test_args = self.TEST_ARGS.copy()
+        test_args['--rate-limit'] = True
+        test_args['--rl-max'] = 200
+        test_args['--rl-sleep'] = '1h'
+        cli = CLI(test_args)
+        self.assertTrue(cli.command().rate_limit_data.enabled)
+        self.assertEqual(cli.command().client.rate_limit_data.max_calls, 200)
+        self.assertEqual(cli.command().client.rate_limit_data.sleep, 1*60*60)
 
 class TestCommits(CommandTestCase, TestCase):
     def setUp(self):

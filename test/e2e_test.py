@@ -40,6 +40,10 @@ Options:
 
   --summarize                    Summarize collected stats.
 
+  --rate-limit                   Enables rate limiting (default or speficy --rt-* options).
+  --rl-max=100                   Max number of API calls before sleeping [default: 100].
+  --rl-sleep=30m                 Time to sleep once max API calls reach, e.g., 30m, 1h for 30 mins, 1 hour [default: 30m].
+
   -s --state=closed              State one of 'open' or 'closed' [default: closed].
 
   --users=user1,user2,...        List of GitHub user IDs to track.

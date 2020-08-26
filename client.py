@@ -20,6 +20,8 @@ class GHClient:
     def __init__(self, access_token, client=None):
         self.client = client
         self.access_token = access_token
+        self.rate_limit_data = RateLimitData(0, 0)
+        self.api_calls = 0
 
     def _week_in(self, week_date, start_date, end_date):
         week_number = week_date.date().isocalendar()[1]
@@ -35,19 +37,34 @@ class GHClient:
             authors_count[author] = 0
         return authors_count
 
+    def _count_check_api_calls(self):
+        if not self.rate_limit_data.enabled:
+            return
+        self.api_calls += 1
+        if self.api_calls >= self.rate_limit_data.max_calls:
+            Console.warn("Rate limit API calls reach '{max_calls}' and sleeping for '{sleep}'".format(max_calls=self.rate_limit_data.max_calls, sleep=self.rate_limit_data.sleep))
+            os.sleep(self.rate_limit_data.sleep)
+            self.api_calls = 0
+
+    def set_rate_limit_data(self, rl):
+        self.rate_limit_data = rl
+
     def get_client(self):
         if self.client == None:
             self.client = Github(self.access_token)
         return self.client
 
     def repos(self, org):
+        self._count_check_api_calls()
         ghorg = self.get_client().get_organization(org)
         return ghorg.get_repos()
 
     def reviews_count(self, repo, author, start_date, end_date, pr_state='close'):
+        self._count_check_api_calls()
         prs = repo.get_pulls(state=pr_state)
         reviews_count = 0
         for pr in prs:
+            self._count_check_api_calls()
             reviews = pr.get_reviews()
             for r in reviews:
                 try:
@@ -58,9 +75,11 @@ class GHClient:
         return reviews_count
 
     def reviews_counts(self, repo, authors, start_date, end_date, pr_state='close'):
+        self._count_check_api_calls()
         prs = repo.get_pulls(state=pr_state)
         reviews_counts = self._init_authors_count_map(authors)
         for pr in prs:
+            self._count_check_api_calls()
             reviews = pr.get_reviews()
             for r in reviews:
                 try:
@@ -72,6 +91,7 @@ class GHClient:
         return reviews_counts
 
     def prs_count(self, repo, author, start_date, end_date, state='close'):
+        self._count_check_api_calls()
         prs = repo.get_pulls(state=state)
         prs_count = 0
         for pr in prs:
@@ -80,6 +100,7 @@ class GHClient:
         return prs_count
 
     def prs_counts(self, repo, authors, start_date, end_date, state='close'):
+        self._count_check_api_calls()
         prs = repo.get_pulls(state=state)
         prs_counts = self._init_authors_count_map(authors)
         for pr in prs:
@@ -89,6 +110,7 @@ class GHClient:
         return prs_counts
 
     def issues_count(self, repo, author, start_date, end_date, state='close'):
+        self._count_check_api_calls()
         issues = repo.get_issues(state=state, since=start_date)
         issues_count = 0
         for i in issues:
@@ -97,6 +119,7 @@ class GHClient:
         return issues_count
 
     def issues_counts(self, repo, authors, start_date, end_date, state='close'):
+        self._count_check_api_calls()
         issues = repo.get_issues(state=state, since=start_date)
         issues_counts = self._init_authors_count_map(authors)
         for i in issues:
@@ -107,6 +130,7 @@ class GHClient:
 
     def commits_count(self, repo, author, start_date, end_date):
         commits_count = 0
+        self._count_check_api_calls()
         for sc in repo.get_stats_contributors():
             if sc.author.login == author:
                 for w in sc.weeks:
@@ -116,6 +140,7 @@ class GHClient:
 
     def commits_counts(self, repo, authors, start_date, end_date):
         commits_counts = self._init_authors_count_map(authors)
+        self._count_check_api_calls()
         for sc in repo.get_stats_contributors():
             if sc.author.login in authors:
                 for w in sc.weeks:

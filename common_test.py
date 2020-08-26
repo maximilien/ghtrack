@@ -56,5 +56,27 @@ class TestConsole(unittest.TestCase):
         self.assertTrue("[=" in output)
         self.assertTrue("100" in output)
 
+class TestRateLimitData(unittest.TestCase):
+    def setUp(self):
+        self.rate_limit_data = RateLimitData(1, 2)
+
+    def tearDown(self):
+        self.rate_limit_data = None
+
+    def test_max_calls(self):
+        self.assertEqual(self.rate_limit_data.max_calls, 1)
+
+    def test_sleep(self):
+        self.assertEqual(self.rate_limit_data.sleep, 2)
+
+    def test_enabled_default(self):
+        self.assertFalse(self.rate_limit_data.enabled)
+
+    def test_enabled_True(self):
+        self.rate_limit_data.enabled = True
+        self.assertTrue(self.rate_limit_data.enabled)
+        self.rate_limit_data.enabled = False
+        self.assertFalse(self.rate_limit_data.enabled)
+
 if __name__ == '__main__':
     unittest.main()

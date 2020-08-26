@@ -59,3 +59,12 @@ class Console:
 
         sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
         sys.stdout.flush()
+
+class RateLimitData:
+    DEFAULT_RATE_LIMIT_MAX = 100
+    DEFAULT_RATE_LIMIT_SLEEP = 30*60
+    def __init__(self, max_calls, sleep, enabled=False):
+        self.enabled = enabled
+        self.max_calls = max_calls
+        self.sleep = sleep
+
