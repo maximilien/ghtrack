@@ -68,6 +68,12 @@ Options:
   --reviews                      Collect reviews stats.
   --issues                       Collect issues stats.
 
+  --summarize                    Summarize collected stats.
+
+  --rate-limit                   Enables rate limiting (default or speficy --rt-* options).
+  --rl-max=100                   Max number of API calls before sleeping [default: 100].
+  --rl-sleep=30m                 Time to sleep once max API calls reach, e.g., 30m, 1h for 30 mins, 1 hour [default: 30m].
+
   -s --state=closed              State one of 'open' or 'closed' [default: closed].
 
   --users=user1,user2,...        List of GitHub user IDs to track.
@@ -84,7 +90,7 @@ Options:
 
   -h --help                      Show this screen.
   -v --version                   Show version.
-  ```
+```
 
 ### `commits`
 
@@ -219,6 +225,104 @@ ght stats june knative --users=maximilien \
 Collects stats summary ('--commits', '--prs', '--reviews', and '--issues') data for GitHub user 'maximilien' during the month of 'june' in all repos except 'client' and 'client-contrib' repos of the 'knative' organization and display it in standard output.
 
 You can of course specify a subset of flags: '--commits', '--prs', '--reviews', and '--issues', and only collect these statistics.
+
+### common flags
+
+Some additional documentation on common flags:
+
+#### `--verbose`
+
+Turn this on by simply using `--verbose` to see all output. The CLI by default shows a lot of output but with `--verbose` all output is shown.
+
+#### `--summarize`
+
+Using this flag for any of the commands will generate two additional table of data that summarize the data independent of users and per-repo. So the total number of commits, issues, reviews, and prs for each repo. This data is shown in two views [data, repo, total] and [repo, data, total]. For example:
+
+```bash
+./ght stats july knative --commits --issues --summarize \
+                         --users=maximilien,octocat \
+                         --repos=client,client-contrib \
+                         --show-all-stats -o text 
+Getting 'commits' for 'maximilien' in organization: 'knative'
+[============================================================] 100.0% ...processing repos
+...
+
+org        year  month    data     state
+-------  ------  -------  -------  -------
+knative    2020  july     commits  closed
+
+user        repo            data       count
+----------  --------------  -------  -------
+maximilien  client          commits        5
+maximilien  client-contrib  commits        0
+octocat     client          commits        0
+octocat     client-contrib  commits        0
+
+...
+
+org        year  month    data    state
+-------  ------  -------  ------  -------
+knative    2020  july     issues  closed
+
+user        repo            data      count
+----------  --------------  ------  -------
+maximilien  client          issues        0
+maximilien  client-contrib  issues        0
+octocat     client          issues        0
+octocat     client-contrib  issues        0
+
+repo            data       total
+--------------  -------  -------
+client          commits        5
+client          prs            0
+client          reviews        0
+...
+
+data     repo              total
+-------  --------------  -------
+commits  client                0
+commits  client                5
+commits  client-contrib        0
+commits  client-contrib        5
+...
+
+OK
+```
+
+#### `--show-all-stats`
+
+In many cases queries results end up with various entries with 0 total. For instance, user `octocat` has 0 reviews, prs, and commits. Using `--show-all-stats` will show an entry for all collected data (0 or not).
+
+#### `--rate-limit`
+
+Using the CLI for large queries (particularly for reviews) will end up with 100s of API calls to GitHub. While there places with `ght` could get faster by caching intermediate data and perhaps better total algorithms or using smarler data structure, none will solve the fundamental issue. 
+
+The GitHub v3 public API is limited (publicly) in what we as end user can do. So various options are not allowed at this point. For instance, unlike commits query which is fast as it caches the data and returns totals for the past year, API calls for PR reviews and issues for instance are limited. You cannot do fine grained queries and even limit (in case of reviews) the dates for the query.
+
+So in the current implementation, `ght` has to get all the data and process it locally. This is good for the GitHub server but bad for the local clients (`ght`). But as thw GitHub APIs is free, one cannot complain.
+
+So one solution to avoid running into rate limiting errors (performing more API calls than allowed within a period of time), the CLI offers `--rate-limit` which allows the CLI to slow down its API invocations. This is done as follows:
+
+1. Use `--rate-limit` and `ght` will automatically sleep periodically once it reaches some fixed number of API calls. 
+
+2. Use `--rate-limit` and the associated `--rl-max` and `--rl-sleep` to specify the max number of API calls before sleeping. For instance the following call will rate limit after 5 API calls and sleep for 10 seconds before continueing:
+
+```bash
+/ght stats july knative --commits --issues --summarize \
+                        --users=maximilien,octocat \
+                        --repos=client,client-contrib \
+                        --show-all-stats -o text \
+                        --rate-limit --rl-max=5 --rl-sleep=10s
+
+Getting 'commits' for 'maximilien' in organization: 'knative'
+[============================================================] 100.0% ...processing repos
+Getting 'commits' for 'octocat' in organization: 'knative'
+[================================================------------] 80.0% ...processing repos
+Warning: Rate limit API calls reach '5' and sleeping for '10' seconds
+...
+```
+
+All of the various commands (stats, commits, prs, reviews, and issues) can use `--rate-limit` flags.
 
 ## Workflows
 
