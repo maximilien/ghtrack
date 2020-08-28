@@ -71,6 +71,7 @@ Options:
   --summarize                    Summarize collected stats.
 
   --rate-limit                   Enables rate limiting (default or speficy --rt-* options).
+  --rate-limit-random            Enables rate limiting by randomly picking max and sleep value with default or --rl-* values as ceilings.
   --rl-max=100                   Max number of API calls before sleeping [default: 100].
   --rl-sleep=30m                 Time to sleep once max API calls reach, e.g., 30m, 1h for 30 mins, 1 hour [default: 30m].
 
@@ -236,7 +237,7 @@ Turn this on by simply using `--verbose` to see all output. The CLI by default s
 
 #### `--summarize`
 
-Using this flag for any of the commands will generate two additional table of data that summarize the data independent of users and per-repo. So the total number of commits, issues, reviews, and prs for each repo. This data is shown in two views [data, repo, total] and [repo, data, total]. For example:
+Using this flag for any of the commands will generate two additional tables of data that summarize the results independent of specific users. So the total number of commits, issues, reviews, and prs for each repo. This data is shown in two views [data, repo, total] and [repo, data, total]. For example:
 
 ```bash
 ./ght stats july knative --commits --issues --summarize \
@@ -291,21 +292,21 @@ OK
 
 #### `--show-all-stats`
 
-In many cases queries results end up with various entries with 0 total. For instance, user `octocat` has 0 reviews, prs, and commits. Using `--show-all-stats` will show an entry for all collected data (0 or not).
+In many cases queries results end up with various entries with 0 totals. For instance, user `octocat` has 0 reviews, 0 prs, and 0 commits. Using `--show-all-stats` will show an entry for all collected data (0 or not). By default, 0 total entries are ommitted.
 
 #### `--rate-limit`
 
-Using the CLI for large queries (particularly for reviews) will end up with 100s of API calls to GitHub. While there places with `ght` could get faster by caching intermediate data and perhaps better total algorithms or using smarler data structure, none will solve the fundamental issue. 
+Using the CLI for large queries (particularly for reviews) will end up with 100s of API calls to GitHub. While there are places where `ght` could get faster by caching intermediate data and perhaps better totaling algorithms or even using smarter data structure, none will solve the fundamental issue. 
 
-The GitHub v3 public API is limited (publicly) in what we as end user can do. So various options are not allowed at this point. For instance, unlike commits query which is fast as it caches the data and returns totals for the past year, API calls for PR reviews and issues for instance are limited. You cannot do fine grained queries and even limit (in case of reviews) the dates for the query.
+The GitHub v3 public API is limited (publicly) in what we as end users can do with it. So various options are not allowed at this point. For instance, unlike commits' queries, which is fast as all such querries are pre-computed and cached --- the result is a complete totals for the past year; most other API calls, e.g., for PRs, reviews, and issues for instance are limited. You cannot do fine grained queries, ask for count, and even date limits (in case of reviews).
 
-So in the current implementation, `ght` has to get all the data and process it locally. This is good for the GitHub server but bad for the local clients (`ght`). But as thw GitHub APIs is free, one cannot complain.
+So in the current implementation, `ght` has to often get all the data and process it locally. This is good for the GitHub API servers but bad for the local clients (`ght`). But as the GitHub APIs is free, one cannot complain.
 
-So one solution to avoid running into rate limiting errors (performing more API calls than allowed within a period of time), the CLI offers `--rate-limit` which allows the CLI to slow down its API invocations. This is done as follows:
+So one solution to avoid running into rate limiting errors (performing more API calls than allowed within a period of time), the CLI offers `--rate-limit` and `--rate-limit-random` which allows the CLI to slow down its API invocations. This is done as follows:
 
 1. Use `--rate-limit` and `ght` will automatically sleep periodically once it reaches some fixed number of API calls. 
 
-2. Use `--rate-limit` and the associated `--rl-max` and `--rl-sleep` to specify the max number of API calls before sleeping. For instance the following call will rate limit after 5 API calls and sleep for 10 seconds before continueing:
+2. Use `--rate-limit` and the associated `--rl-max` and `--rl-sleep` to specify the values for max number of API calls and the value of the sleep. For instance the following call will rate limit after 5 API calls and sleep for 10 seconds before continueing:
 
 ```bash
 /ght stats july knative --commits --issues --summarize \
@@ -326,7 +327,7 @@ All of the various commands (stats, commits, prs, reviews, and issues) can use `
 
 #### `--rate-limit-random`
 
-Exactly like `--rate-limit` except that the value for max API calls and sleep is determine using a radom number generator selecting a random value between 1 and the value for max API calls or sleep.
+Exactly like `--rate-limit` except that the value for max API calls and for sleep is determine using a radom number generator selecting a random value between 1 and the value for max API calls or for sleep.
 
 ## Workflows
 
