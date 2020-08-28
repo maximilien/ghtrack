@@ -324,6 +324,10 @@ Warning: Rate limit API calls reach '5' and sleeping for '10' seconds
 
 All of the various commands (stats, commits, prs, reviews, and issues) can use `--rate-limit` flags.
 
+#### `--rate-limit-random`
+
+Exactly like `--rate-limit` except that the value for max API calls and sleep is determine using a radom number generator selecting a random value between 1 and the value for max API calls or sleep.
+
 ## Workflows
 
 TODO

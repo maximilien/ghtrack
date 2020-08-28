@@ -36,7 +36,8 @@ Options:
 
   --summarize                    Summarize collected stats.
 
-  --rate-limit                   Enables rate limiting (default or speficy --rt-* options).
+  --rate-limit                   Enables rate limiting (default or speficy --rl-* options).
+  --rate-limit-random            Enables rate limiting by randomly picking max and sleep value with default or --rl-* values as ceilings.
   --rl-max=100                   Max number of API calls before sleeping [default: 100].
   --rl-sleep=30m                 Time to sleep once max API calls reach, e.g., 30m, 1h for 30 mins, 1 hour [default: 30m].
 

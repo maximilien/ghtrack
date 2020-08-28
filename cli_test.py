@@ -34,6 +34,7 @@ class TestCLI(TestCase):
                          '--summarize': False,
                          '--show-all-stats': False,
                          '--rate-limit': False,
+                         '--rate-limit-random': False,
                          '--state': 'closed',
                          '--output': 'text',
                          '--file': '',
@@ -89,6 +90,7 @@ class CommandTestCase:
                          '--summarize': False,
                          '--show-all-stats': False,
                          '--rate-limit': False,
+                         '--rate-limit-random': False,
                          '--state': 'closed',
                          '--output': 'text',
                          '--file': '',
@@ -162,6 +164,7 @@ class CommandTestCase:
                  '--summarize': False,
                  '--show-all-stats': False,
                  '--rate-limit': False,
+                 '--rate-limit-random': False,
                  '--commits': False,
                  '--prs': False,
                  '--reviews': False,
@@ -468,56 +471,56 @@ class CommandTestCase:
         test_args['--rl-sleep'] = '1m'
         cli = CLI(test_args)
         self.assertTrue(cli.command().check_rl_sleep())
-        self.assertTrue(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().rate_limit_data.sleep, 60)
+        self.assertTrue(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().rate_limit_data.sleep(), 60)
 
         test_args = self.TEST_ARGS.copy()
         test_args['--rate-limit'] = True
         test_args['--rl-sleep'] = '1h'
         cli = CLI(test_args)
         self.assertTrue(cli.command().check_rl_sleep())
-        self.assertTrue(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().rate_limit_data.sleep, 3600)
+        self.assertTrue(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().rate_limit_data.sleep(), 3600)
 
         test_args = self.TEST_ARGS.copy()
         test_args['--rate-limit'] = True
         test_args['--rl-sleep'] = '2d'
         cli = CLI(test_args)
         self.assertTrue(cli.command().check_rl_sleep())
-        self.assertTrue(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().rate_limit_data.sleep, 2*24*3600)
+        self.assertTrue(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().rate_limit_data.sleep(), 2*24*3600)
 
     def test_rate_limit_False(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--rate-limit'] = False
         cli = CLI(test_args)
-        self.assertFalse(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().rate_limit_data.max_calls, 0)
-        self.assertEqual(cli.command().rate_limit_data.sleep, 0)
+        self.assertFalse(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().rate_limit_data.max_calls(), 0)
+        self.assertEqual(cli.command().rate_limit_data.sleep(), 0)
 
     def test_rate_limit_True(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--rate-limit'] = True
         cli = CLI(test_args)
-        self.assertTrue(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().rate_limit_data.max_calls, 100)
-        self.assertEqual(cli.command().rate_limit_data.sleep, 30*60)
+        self.assertTrue(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().rate_limit_data.max_calls(), 100)
+        self.assertEqual(cli.command().rate_limit_data.sleep(), 30*60)
 
     def test_rate_limit_bad_rl_max(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--rate-limit'] = True
         test_args['--rl-max'] = -1
         cli = CLI(test_args)
-        self.assertTrue(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().rate_limit_data.max_calls, 100)
+        self.assertTrue(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().rate_limit_data.max_calls(), 100)
 
     def test_rate_limit_bad_rl_sleep(self):
         test_args = self.TEST_ARGS.copy()
         test_args['--rate-limit'] = True
         test_args['--rl-sleep'] = ''
         cli = CLI(test_args)
-        self.assertTrue(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().rate_limit_data.sleep, 30*60)
+        self.assertTrue(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().rate_limit_data.sleep(), 30*60)
 
     def test_rate_limit_True_values(self):
         test_args = self.TEST_ARGS.copy()
@@ -525,9 +528,9 @@ class CommandTestCase:
         test_args['--rl-max'] = 200
         test_args['--rl-sleep'] = '1h'
         cli = CLI(test_args)
-        self.assertTrue(cli.command().rate_limit_data.enabled)
-        self.assertEqual(cli.command().client.rate_limit_data.max_calls, 200)
-        self.assertEqual(cli.command().client.rate_limit_data.sleep, 1*60*60)
+        self.assertTrue(cli.command().rate_limit_data.enabled())
+        self.assertEqual(cli.command().client.rate_limit_data.max_calls(), 200)
+        self.assertEqual(cli.command().client.rate_limit_data.sleep(), 1*60*60)
 
 class TestCommits(CommandTestCase, TestCase):
     def setUp(self):

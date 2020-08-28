@@ -64,19 +64,39 @@ class TestRateLimitData(unittest.TestCase):
         self.rate_limit_data = None
 
     def test_max_calls(self):
-        self.assertEqual(self.rate_limit_data.max_calls, 1)
+        self.assertEqual(self.rate_limit_data.max_calls(), 1)
+
+    def test_set_max_calls(self):
+        self.rate_limit_data.set_max_calls(2)
+        self.assertEqual(self.rate_limit_data.max_calls(), 2)
+
+    def test_max_calls(self):
+        self.rate_limit_data = RateLimitData(10, 10, False, True)
+        max_calls = self.rate_limit_data.max_calls()
+        self.assertTrue(max_calls >= 1)
+        self.assertTrue(max_calls <= 10)
 
     def test_sleep(self):
-        self.assertEqual(self.rate_limit_data.sleep, 2)
+        self.assertEqual(self.rate_limit_data.sleep(), 2)
+
+    def test_set_sleep(self):
+        self.rate_limit_data.set_sleep(1)
+        self.assertEqual(self.rate_limit_data.sleep(), 1)
+
+    def test_sleep_random(self):
+        self.rate_limit_data = RateLimitData(10, 10, False, True)
+        sleep = self.rate_limit_data.sleep()
+        self.assertTrue(sleep >= 1)
+        self.assertTrue(sleep <= 10)
 
     def test_enabled_default(self):
-        self.assertFalse(self.rate_limit_data.enabled)
+        self.assertFalse(self.rate_limit_data.enabled())
 
     def test_enabled_True(self):
-        self.rate_limit_data.enabled = True
-        self.assertTrue(self.rate_limit_data.enabled)
-        self.rate_limit_data.enabled = False
-        self.assertFalse(self.rate_limit_data.enabled)
+        self.rate_limit_data.set_enabled(True)
+        self.assertTrue(self.rate_limit_data.enabled())
+        self.rate_limit_data.set_enabled(False)
+        self.assertFalse(self.rate_limit_data.enabled())
 
 if __name__ == '__main__':
     unittest.main()

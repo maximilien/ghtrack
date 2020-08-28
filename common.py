@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import sys
+from random import randint
 
 VERBOSE=False
 
@@ -63,8 +64,33 @@ class Console:
 class RateLimitData:
     DEFAULT_RATE_LIMIT_MAX = 100
     DEFAULT_RATE_LIMIT_SLEEP = 30*60
-    def __init__(self, max_calls, sleep, enabled=False):
-        self.enabled = enabled
-        self.max_calls = max_calls
-        self.sleep = sleep
+    def __init__(self, max_calls, sleep, enabled=False, random=False):
+        self.__enabled = enabled
+        self.__max_calls = max_calls
+        self.__sleep = sleep
+        self.__random = random
 
+    def enabled(self):
+        return self.__enabled
+
+    def set_enabled(self, aBool):
+        self.__enabled = aBool
+
+    def random(self):
+        return self.__random
+
+    def max_calls(self):
+        if self.__random:
+            return randint(1, self.__max_calls)
+        return self.__max_calls
+
+    def sleep(self):
+        if self.__random:
+            return randint(1, self.__sleep)
+        return self.__sleep
+
+    def set_max_calls(self, int_value):
+        self.__max_calls = int_value
+
+    def set_sleep(self, int_value):
+        self.__sleep = int_value

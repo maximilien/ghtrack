@@ -153,19 +153,24 @@ class Command:
         return summary_stats
 
     def _init_rate_limit_data(self):
-        if not self.rate_limit():
-            return RateLimitData(0, 0, False)
+        rate_limit_data = RateLimitData(0, 0, False)
+        if not self.rate_limit() and not self.rate_limit_random():
+            return rate_limit_data
+        
+        if self.rate_limit():
+            rate_limit_data = RateLimitData(RateLimitData.DEFAULT_RATE_LIMIT_MAX, RateLimitData.DEFAULT_RATE_LIMIT_SLEEP, True)
+        elif self.rate_limit_random():
+            rate_limit_data = RateLimitData(RateLimitData.DEFAULT_RATE_LIMIT_MAX, RateLimitData.DEFAULT_RATE_LIMIT_SLEEP, True, True)
 
-        rate_limit_data = RateLimitData(RateLimitData.DEFAULT_RATE_LIMIT_MAX, RateLimitData.DEFAULT_RATE_LIMIT_SLEEP, True)
         if not self.check_rl_max():
             Console.print("Using default rate limit API calls of '{default}'".format(default=RateLimitData.DEFAULT_RATE_LIMIT_MAX))
         else:
-            rate_limit_data.max_calls = int(self.rl_max())
+            rate_limit_data.set_max_calls(int(self.rl_max()))
 
         if not self.check_rl_sleep():
             Console.print("Using default rate limit sleep of '{default}'".format(default=RateLimitData.DEFAULT_RATE_LIMIT_SLEEP))
         else:
-            rate_limit_data.sleep = self._parse_rl_sleep()
+            rate_limit_data.set_sleep(self._parse_rl_sleep())
 
         return rate_limit_data
 
@@ -550,6 +555,9 @@ class Command:
 
     def rate_limit(self):
         return self.args['--rate-limit']
+
+    def rate_limit_random(self):
+        return self.args['--rate-limit-random']
 
     def rl_max(self):
         return self.args['--rl-max']
