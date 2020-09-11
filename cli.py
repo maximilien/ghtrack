@@ -320,7 +320,11 @@ class Command:
         for user in self.users():
             user_data_map = data_map[user]
             for repo_name in user_data_map:
-                self.repos_stats[repo_name][data] += user_data_map[repo_name]
+                if repo_name in self.repos_stats:
+                    self.repos_stats[repo_name][data] += user_data_map[repo_name]
+                else:
+                    self.repos_stats[repo_name] = {}
+                    self.repos_stats[repo_name][data] = user_data_map[repo_name]
 
     # data is one of 'commits', 'prs', 'reviews', 'issues'
     # data_map is map {'user0': {'repo0': count0, 'repo1': count1, ...}, {...}}

@@ -8,6 +8,7 @@ credentials.yml
 .ghtrack.yml
 vendor
 tmp*
+data
 *.csv
 *.json
 *.yml
