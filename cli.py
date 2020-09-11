@@ -98,10 +98,10 @@ class Command:
         self.args = args
         self.credentials = credentials
         self.client = client
-        self.repos_stats = self._init_repos_stats()
-        self.summary_stats = self._init_summary_stats()
         self.rate_limit_data = self._init_rate_limit_data()
         self.client.set_rate_limit_data(self.rate_limit_data)
+        self.repos_stats = self._init_repos_stats()
+        self.summary_stats = self._init_summary_stats()
         self.__month_number = 0
 
     def __init_empty_options(self, args):
@@ -146,10 +146,12 @@ class Command:
     def _init_summary_stats(self):
         data = ['commits', 'prs', 'issues', 'reviews']
         summary_stats = {} #{'commits': {'repo0': 0, 'repo1': 0, ...},{'reviews': {'repo0': 0, ...},...}
-        for repo in self.repos():
-            if repo not in self.skip_repos():
-                for item in data:
-                    summary_stats[item] = {repo: 0}
+        for item in data:
+            repo_stats = {}
+            for repo in self.repos():
+                if repo not in self.skip_repos():
+                    repo_stats[repo] = 0
+            summary_stats[item] = repo_stats
         return summary_stats
 
     def _init_rate_limit_data(self):
@@ -323,8 +325,10 @@ class Command:
                 if repo_name in self.repos_stats:
                     self.repos_stats[repo_name][data] += user_data_map[repo_name]
                 else:
-                    self.repos_stats[repo_name] = {}
                     self.repos_stats[repo_name][data] = user_data_map[repo_name]
+                if self.repos_stats[repo_name][data] == 0 and not self.show_all_stats():
+                    del(self.repos_stats[repo_name][data])
+
 
     # data is one of 'commits', 'prs', 'reviews', 'issues'
     # data_map is map {'user0': {'repo0': count0, 'repo1': count1, ...}, {...}}
@@ -333,10 +337,12 @@ class Command:
         for user in self.users():
             user_data_map = data_map[user]
             for repo_name in user_data_map:
-                if repo_name in self.summary_stats[data]:
+                if repo_name in user_data_map:
                     self.summary_stats[data][repo_name] += user_data_map[repo_name]
                 else:
                     self.summary_stats[data][repo_name] = user_data_map[repo_name]
+                if self.repos_stats[repo_name][data] == 0 and not self.show_all_stats():
+                    del(self.repos_stats[repo_name][data])
 
     def _update_users_issues(self):
         repos = self.client.repos(self.org())
@@ -409,6 +415,12 @@ class Command:
             Console.println()
         self._update_repo_stats('commits', self.users_commits)
         self._update_summary_stats('commits', self.users_commits)
+
+    def _init_repos_from_all_repos(self):
+        repo_names = []
+        repos = self.client.repos(self.org())
+        for repo in repos: repo_names.append(repo.name)
+        self.args['--repos'] = repo_names
 
     def check_month(self, month):
         if month in self.MONTHS_LOWER.keys():
@@ -525,6 +537,8 @@ class Command:
         return self.args['ORG']
 
     def repos(self):
+        if len(self.args['--repos']) == 0 and self.args['--all-repos']:
+            self._init_repos_from_all_repos()
         return self.args['--repos']
 
     def skip_repos(self):
@@ -592,10 +606,7 @@ class Command:
         if not self.all_repos(): return
         if self.all_repos() and len(self.repos()) > 0:
             self.warn("ignoring --repos since --all-repos is set")
-        repo_names = []
-        repos = self.client.repos(self.org())
-        for repo in repos: repo_names.append(repo.name)
-        self.args['--repos'] = repo_names
+        self._init_repos_from_all_repos()
 
     def print_output(self, output_map):
         if self.output() in self.OUTPUT_JSON:
