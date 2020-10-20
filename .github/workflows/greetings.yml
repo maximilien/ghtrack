@@ -1,0 +1,13 @@
+name: Greetings
+
+on: [pull_request, issues]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/first-interaction@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        issue-message: 'Thanks for opening an issue. Would also love to know how you are or intend to use this project. Just curious.'
+        pr-message: 'Thanks for submitting a PR. Fantastics. Please ensure that all GitHub actions are green --- especially that all tests are passing.'
