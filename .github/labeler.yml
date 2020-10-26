@@ -1,0 +1,11 @@
+repo:
+  - ./*
+
+test:
+  - test/**/*
+
+source:
+- any: ['funcs/**/*.py', '!funcs/docs/*']
+
+docs:
+  - docs/**/*
