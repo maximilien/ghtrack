@@ -351,7 +351,7 @@ Once `pip` is installed, then install the dependencies with:
 pip install PyGitHub==1.51
 pip install PyYAML==5.3.1
 pip install docopt==0.6.2
-pip install tabulate==0.8.7
+pip install tabulate==0.9.0
 ```
 
 You can verify that your system is running by running the unit tests: `./hack/build.sh --test`.
