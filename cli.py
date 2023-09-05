@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io, sys, yaml, json, csv, os.path
+import io, yaml, json, csv, os.path
 
 from datetime import datetime
 from calendar import monthrange
@@ -158,7 +158,7 @@ class Command:
         rate_limit_data = RateLimitData(0, 0, False)
         if not self.rate_limit() and not self.rate_limit_random():
             return rate_limit_data
-        
+
         if self.rate_limit():
             rate_limit_data = RateLimitData(RateLimitData.DEFAULT_RATE_LIMIT_MAX, RateLimitData.DEFAULT_RATE_LIMIT_SLEEP, True)
         elif self.rate_limit_random():
@@ -268,12 +268,12 @@ class Command:
             header, summary_stats_table = self._extract_summary_stats_table()
             self._write_list_as_csv(csv_file, [header, *summary_stats_table])
 
-    def _print_output_text(self, output_map):        
+    def _print_output_text(self, output_map):
         Console.println()
         request_headers = ['org', 'year', 'month', 'data', 'state']
         r = output_map['request']
         print(tabulate([[r['org'], r['year'], r['month'], r['data'], r['state']]], headers=request_headers))
-        
+
         Console.println()
         users_repos_data = self._extract_user_repo_data(output_map['request']['data'], output_map)
         print(tabulate(users_repos_data[1:], headers=users_repos_data[0]))
@@ -682,7 +682,7 @@ class Reviews(Command):
     def name(self):
       return "reviews"
 
-    def reviews(self): 
+    def reviews(self):
         self.start_comment()
         Console.print("Getting reviews for {total_users} users in {total_repos} repos via GitHub APIs... be patient".format(total_users=len(self.users()), total_repos=len(self.repos())))
         self._update_users_reviews()

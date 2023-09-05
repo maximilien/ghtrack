@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import time
+from datetime import datetime
 
 from github import Github
 
@@ -45,7 +46,9 @@ class GHClient:
         self.api_calls += 1
         if self.api_calls >= self.rate_limit_data.max_calls():
             Console.println()
-            Console.warn("Rate limit API calls reach '{max_calls}' and sleeping for '{sleep}' seconds".format(max_calls=self.rate_limit_data.max_calls(), sleep=self.rate_limit_data.sleep()))
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            Console.warn("{current_time} Rate limit API calls reach '{max_calls}' and sleeping for '{sleep}' seconds".format(current_time=current_time, max_calls=self.rate_limit_data.max_calls(), sleep=self.rate_limit_data.sleep()))
             time.sleep(self.rate_limit_data.sleep())
             self.api_calls = 0
 
@@ -134,11 +137,14 @@ class GHClient:
     def commits_count(self, repo, author, start_date, end_date):
         commits_count = 0
         self._count_check_api_calls()
-        for sc in repo.get_stats_contributors():
-            if sc.author.login == author:
-                for w in sc.weeks:
-                    if self._week_in(w.w, start_date, end_date): 
-                        commits_count += w.c
+        try:
+            for sc in repo.get_stats_contributors():
+                if sc.author.login == author:
+                    for w in sc.weeks:
+                        if self._week_in(w.w, start_date, end_date):
+                            commits_count += w.c
+        except TypeError as e:
+            print(f"{e} is a NoneType")
         return commits_count
 
     def commits_counts(self, repo, authors, start_date, end_date):
