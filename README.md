@@ -8,7 +8,7 @@ There are two things you need to get started with the ghtrack CLI. From now on c
 
 First, you need to get a developer, or admin account, for your `GitHub` ID. [Register](https://developer.github.com/program/), it's free. When you do, you can then create an access token in order to use the GitHub APIs v3 (or later).
 
-Second, you need to setup your [environment](#Environment). See that section for details. However, note also that you can either setup your local machine with Python3 and the dependencies, or, alternatively, use the included [`Dockerfile`](Dockerfile) to create a container with the latest version and all the dependencies setup for you. 
+Second, you need to setup your [environment](#Environment). See that section for details. However, note also that you can either setup your local machine with Python3 and the dependencies. 
 
 You can also use one of my published images, or best, the latest one here: `docker.io/drmax/ghtrack:latest`. And then run the image locally and start an interactive BASH session with:
 
